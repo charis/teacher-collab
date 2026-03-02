@@ -1,0 +1,106 @@
+id,problemId,title,text,imageURL,imageDescription,agentNotes,personas
+1,number_trains,Number Trains,null,/images/problems/math/number_trains.png,"The problem worksheet introduces a context about Sally making number trains. Each train consists of an engine (locomotive) with a number on it, followed by two boxcars, each also containing a number. The visual representation shows train diagrams with the engine on the left and two boxcars attached.
+The core mathematical rule is: An engine can pull two boxcars ONLY when the product of the two boxcar numbers equals the engine number. For example, engine 12 can pull boxcars with numbers 1 and 12 because 1 × 12 = 12.
+
+The worksheet presents multiple problems:
+Problems 1-2: Students must fill in empty boxcars with factor pairs for engines numbered 12 and 18. The first train shows an example. Students need to find two additional factor pairs for 12 and three factor pairs for 18. Each set of boxcars represents one multiplication sentence showing how the factors make up the engine number.
+Problem 3: Students must find factor pairs for engine number 24, with four sets of empty boxcars to complete.
+Problem 4: This is a reverse problem. Students are given that the two boxcars have the numbers 2 and 18. They must:
+• First, determine what engine number can pull these boxcars (find the product: 2 × 18)
+• Then, list four OTHER pairs of boxcar numbers that this same engine could pull (find four different factor pairs of 36)","In this task, the mathematical learning goals are:
+• Understand and apply the concept of factors and factor pairs
+• Recognize that multiplication is commutative (3 × 4 = 4 × 3)
+• Find multiple factor pairs for a given number
+• Understand the relationship between multiplication and factors (if a × b = c, then a and b are factors of c)
+• Work systematically to find all factor pairs of a number
+• Apply inverse thinking: given factors, find the product; given the product, find other factor pairs
+• On students' written sample, there are some marks ""checkmarks and crosses,"" it wasn't written by the students, but by the teacher.
+
+Key Mathematical Concepts:
+• Factors: Numbers that divide evenly into another number. If a × b = c, then a and b are factors of c.
+• Factor pairs: Two numbers that multiply together to give a specific product. For example, (1, 12), (2, 6), and (3, 4) are all factor pairs of 12.
+• Multiplicative relationships: The problem embeds multiplication facts within a contextual scenario, helping students see multiplication as a relationship between three numbers.
+• Systematic thinking: Finding ALL factor pairs requires organized thinking - often starting with 1 and working upward, or recognizing when you've found all pairs.
+
+Expected Understandings for Each Problem:
+For Engine 12:
+• Factor pairs: (1, 12), (2, 6), (3, 4)
+• Students should recognize there are exactly 3 factor pairs (since 12 has 6 factors: 1, 2, 3, 4, 6, 12)
+• Some students may list the same pair in different orders: (2, 6) and (6, 2) - this reveals understanding of commutativity
+
+For Engine 18:
+• Factor pairs: (1, 18), (2, 9), (3, 6)
+• Like 12, there are exactly 3 factor pairs
+• Students need to recognize that 18 = 2 × 9 = 3 × 6
+
+For Engine 24:
+• Factor pairs: (1, 24), (2, 12), (3, 8), (4, 6)
+• 24 has 8 factors (1, 2, 3, 4, 6, 8, 12, 24), giving 4 factor pairs
+• This is more challenging as there are more possibilities
+
+For Problem 4 (Engine 36):
+• First, students must calculate: 2 × 18 = 36
+• Then find four OTHER factor pairs of 36: (1, 36), (3, 12), (4, 9), (6, 6)
+• Note: (6, 6) is a special case - the same number twice
+• This requires two-step thinking: first finding the product, then finding different factors","[""Strategy-Focused Teacher"",""Strengths in Student Understanding Teacher"",""Struggles in Student Understanding Teacher""]"
+2,symmetrical_patterns,Symmetrical Patterns,null,/images/problems/math/symmetrical_patterns.png,"This math assessment, titled Symmetrical Patterns, focused on shape recognition and symmetry skills. It outlines a task where students work with symmetrical patterns, with objectives including naming simple shapes and working with symmetry.
+The page includes two distinct figures, each paired with specific questions:
+First figure (top-right, circular-like pattern) linked to Questions 1 and 2. Question 1 asks to name the shapes used in this pattern. Question 2 requires drawing two lines of symmetry for this pattern.
+The first figure is a symmetric, circular-like pattern with a regular octagon at its center. Around the octagon, there are eight symmetrically arranged sections, alternating between two types: 1. Four sections consist of a rectangle formed by two adjacent squares (aligned with the sides of the central octagon), each extending outward into a triangle. 2. The other four sections consist of a single rectangle (aligned with the diagonals of the central octagon), each also extending outward into a triangle. 
+Second figure (bottom-right, partial symmetrical shape with a dashed ""line of symmetry"") linked to Question. Question 3 tasks students with completing the other half of this partial pattern (via reflection) and naming the shapes in it.
+This second figure features a symmetric shape with a vertical dashed line of symmetry labeled ""line of symmetry"". The shape consists of a central rectangle, with a triangle attached to the top left and a congruent triangle attached to the bottom left. The line of symmetry divides the shape into two mirror-image halves, meaning the right half is the reflection of the left half across this vertical line.
+
+The problem has three parts:
+• Students are asked to identify and name the shapes used in the first circular-like pattern
+• Students must draw two lines of symmetry on the first circular-like pattern
+• Students are shown half of a different symmetrical pattern (on the right side of the line of symmetry) and must complete the other half by reflecting across the given line and write the names of the shapes in the pattern. The partial pattern shows geometric shapes, including a triangle at the top and at the bottom, and a rectangle in the middle section.","In this task, the mathematical learning goals are:
+• Identify and name simple 2D geometric shapes (squares, rectangles, triangles, octagons)
+• Understand and apply the concept of line symmetry (reflection symmetry)
+• Recognize that symmetrical patterns have multiple lines of symmetry
+• Use lines of symmetry to complete partial patterns through reflection
+
+In this task, the key mathematical learning concepts are:
+• Line of symmetry: A line that divides a shape or pattern so that one half is the mirror image of the other half
+• Radial symmetry: Multiple lines of symmetry that pass through a central point
+• Reflection: The geometric transformation that creates a mirror image across a line","[""Strategy-Focused Teacher"",""Strengths in Student Understanding Teacher"",""Struggles in Student Understanding Teacher""]"
+3,winning_spinners,Winning Spinners,null,/images/problems/math/winning_spinners.png,"The problem presents a probability scenario in the context of a school fair game. Bill must spin two spinners, and he wins a prize if the sum of the two numbers is an even number.
+Spinner A is divided into four equal sections containing the numbers: 8, 4, 2, 1 Spinner B is divided into four equal sections containing the numbers: 7, 9, 5, 3
+
+The problem has three parts:
+• Part 1: Students must complete an additional chart (table) that shows all possible sums when spinning both spinners. The chart is a 4×4 grid with Spinner A values (8, 4, 2, 1) across the top and Spinner B values (7, 9, 5, 3) down the left side. Some cells are pre-filled: 15, 11, 9, 8, 13, 13, 6, and 5. Students must calculate and fill in the remaining empty cells.
+• Part 2: After completing the chart, students must determine the probability of Bill winning a prize (the probability that the sum is an even number).
+• Part 3: Students must redesign two new spinners using the same eight numbers (8, 4, 2, 1, 7, 9, 5, 3) but arranged differently to increase Bill's chances of winning. Two empty spinner templates (each divided into four sections) are provided. Students must then calculate the new probability and explain their reasoning.","In this task, the mathematical learning goals are:
+• Understand and construct sample spaces for compound probability events
+• Calculate theoretical probability as favorable outcomes over total possible outcomes
+• Recognize patterns in sums (even + even = even, odd + odd = even, even + odd = odd)
+• Apply strategic thinking to maximize probability
+• Understand that probability can be influenced by how outcomes are arranged
+• Express probability as fractions and interpret their meaning
+• Justify mathematical reasoning with evidence
+
+In this task, the key mathematical concepts are
+• Sample Space: The addition chart represents the complete sample space of 16 equally likely outcomes (4 options on Spinner A × 4 options on Spinner B = 16 total combinations).
+• Theoretical Probability: P(event) = (number of favorable outcomes)/(total number of possible outcomes). For Part 2, students need to count even sums and divide by 16.
+• Even/Odd Number Properties:
+  1) Even + Even = Even (e.g., 8 + 4 = 12)
+  2) Odd + Odd = Even (e.g., 7 + 9 = 16)
+  3) Even + Odd = Odd (e.g., 8 + 7 = 15)","[""Strategy-Focused Teacher"",""Strengths in Student Understanding Teacher"",""Struggles in Student Understanding Teacher""]"
+4,time_to_get_clean,Time to Get Clean,null,/images/problems/math/time_to_get_clean.png,"A one-page word-problem worksheet titled ""Time to Get Clean."" A table lists five family members (Megan, Carl, Mom, Dad, Grandpa), their bathroom activities, and the time each takes. Times are in mixed units: fractions of an hour and minutes. Specifically: Megan ( ½ ) hour, Carl 20 minutes, Mom ( 3/4) hour, Dad 50 minutes, Grandpa 35 minutes. Below the table are five prompts:
+• Question 1: ""Who spends the most time…?""
+• Question 2: ""Who spends the shortest time…?""
+• Question 3: ""How long do Dad and Grandpa spend…in all? Show how you figured this out.""
+• Question 4: ""How much longer does Megan spend…than Carl?""
+• Question 5: ""The first person goes in at 6 a.m.… At what time will the bathroom be free? Show how you figured this out.""
+
+A reminder box states (1 hour  = 60 minutes).
+Mathematically, students must convert between hours and minutes, add and compare durations, and compute a finish time by accumulating all five durations.","Rubric / mathematical expectations:
+- Normalize units before operating: ( 1/2 hours = 30 minutes, 3/4 hours = 45 minutes).
+- Correct answers:
+  • Correct answer to Question 1: Dad (50 minutes, the longest).
+  • Correct answer to Question 2: Carl (20 minutes, the shortest).
+  • Correct answer to Question 3: Dad + Grandpa (50 + 35 = 85 minutes = 1 hour and 25 minutes).
+  • Correct answer to Question 4: Megan − Carl (30 - 20 = 10 minutes).
+  • Correct answer to Question 5: Total (30 + 20 + 45 + 50 + 35 = 180 minutes = 3 hours). Start 6:00 a.m. → finish 9:00 a.m.
+  
+- Look-fors in work: evidence of unit conversion, regrouping minutes into hours (e.g., 95 minutes → 1 hour and 35 minutes), and timeline or running-sum strategies.
+- Common struggles to flag with justification: failing to regroup when minutes exceed 59 (e.g., 6:95, 7:80), and mis-converting 3/4 hours as 40 minutes instead of 45 minutes.","[""Strategy-Focused Teacher"",""Strengths in Student Understanding Teacher"",""Struggles in Student Understanding Teacher""]"

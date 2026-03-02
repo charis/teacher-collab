@@ -1,0 +1,203 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Quickstart guide: https://www.prisma.io/docs/getting-started/quickstart
+//
+// Note #1:
+//       - To generate Prisma Client for Accelerate (i.e., initally and whenever
+//         you change the schema) give:
+//           npx prisma generate --no-engine
+//       - Prisma Postgres is powered by Prisma Accelerate providing scalable
+//         connection pooling and built in global caching. Install the latest
+//         version of Prisma Client and the Accelerate Client extension:
+//         npm install prisma @prisma/client@latest @prisma/extension-accelerate
+//           (https://www.prisma.io/docs/getting-started/setup-prisma/start-from-scratch/relational-databases/install-prisma-client-typescript-postgresql)
+//
+// Note #2:
+//       - Whenever you add the schema for the first time run:
+//           npx prisma migrate dev --name init
+//         If you want to delete the existing migrations and start over:
+//           - Delete the 'migrations' folder under 'prisma'
+//             Windows Powershell: Remove-Item -Recurse -Force prisma\migrations
+//             Linux/Unix: rm -rf prisma/migrations
+//           - To check if the schema is valid give:
+//               npx prisma validate
+//           - Give:
+//               npx prisma migrate reset
+//             then confirm that want to lose all data and finally give:
+//               npx prisma migrate dev --name init
+//      - To verify the changes, run:
+//          npx prisma studio
+// Note #3:
+//       To initialize the database with some data:
+//         1. Create a file similar to seed.js in the 'prisma' folder
+//         2. Add it to your package.json:
+//            "prisma": {
+//              "seed": "ts-node prisma/seed.js"
+//             }
+//         3. Run 'npm install --save-dev ts-node'
+//         4. Run 'npx prisma db seed'
+// Note #4:
+//       To export all models in the Prisma schema to separate CSV files:
+//         npx ts-node prisma/export-to-csv.ts
+//         In package.json we have under "scripts": "export-db": "ts-node prisma/export-to-csv.ts".
+//         So, you can simply run:
+//           npm run export-db
+// Note #5:
+//       To import  CSV data into a Prisma model:
+//         npx ts-node prisma/import-from-csv.ts <model> /path/to/csv-file
+//         npx ts-node prisma/import-from-csv.ts User .\prisma\exports\export-User.csv
+//       To import all the data in the right order:
+//         npx ts-node prisma/import-all.ts
+//         In package.json we have under "scripts": "import-db": "ts-node prisma/import-all.ts".
+//         So, you can simply run:
+//           npm run import-db
+//         Then give:
+//           npm run fix-postgres-sequence
+//         to fix Prisma P2002 (unique constraint on ._id) issues
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id                        Int                      @id @default(autoincrement()) @map("_id")
+    email                     String                   @unique
+    name                      String
+    password                  String
+    isAdmin                   Boolean                  @default(false)
+    isVerified                Boolean                  @default(false)
+    forgotPasswordToken       String?
+    forgotPasswordTokenExpiry DateTime?
+    verifyToken               String?
+    verifyTokenExpiry         DateTime?
+    chats                     Chat[]
+}
+
+model Persona {
+    id                        Int                      @id @default(autoincrement()) @map("_id")
+    personaId                 String                   @unique
+    name                      String
+    gender                    String
+    description               String
+    initialMessage            String
+    instructions              String?
+    problems                  Problem[]
+    messages                  Message[]
+}
+
+model Problem {
+    id                        Int                      @id @default(autoincrement()) @map("_id")
+    problemId                 String                   @unique
+    title                     String
+    text                      String?
+    imageURL                  String?
+    imageDescription          String?
+    agentNotes                String?
+    personas                  Persona[]
+    transcripts               Transcript[]
+    chatTemplateProblems      ChatTemplateProblem[]
+}
+
+model Transcript {
+    id                        Int                      @id @default(autoincrement()) @map("_id")
+    problem                   Problem                  @relation(fields: [problemId], references: [problemId])
+    problemId                 String
+    text                      String?
+    imageURL                  String?
+    imageDescription          String?
+    agentNotes                String?
+    learningSequences         LearningSequence[]
+}
+
+model Chat {
+    id                        Int                      @id @default(autoincrement()) @map("_id")
+    user                      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId                    Int
+    completed                 Boolean                  @default(false)
+    creationTime              DateTime                 @default(now())
+    updateTime                DateTime                 @updatedAt
+    learningSequences         LearningSequence[]
+    messages                  Message[]
+    template                  ChatTemplate?            @relation(fields: [templateId], references: [id], onDelete: SetNull)
+    templateId                Int?
+}
+
+model LearningSequence {
+    chat                      Chat                     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+    chatId                    Int
+    transcript                Transcript               @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+    transcriptId              Int
+    messages                  Message[]
+    
+    @@id([chatId, transcriptId]) // Composite primary key
+}
+
+model Message {
+    id                        Int                      @id @default(autoincrement()) @map("_id")
+    learningSequence          LearningSequence?        @relation(fields: [chatId, transcriptId], references: [chatId, transcriptId], onDelete: Cascade)
+    persona                   Persona?                 @relation(fields: [personaId], references: [personaId], onDelete: Cascade)
+    personaId                 String?
+    chat                      Chat                     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+    chatId                    Int
+    problemId                 String?
+    transcriptId              Int?
+    agentId                   String?
+    text                      String
+    role                      String
+    agentMode                 String?
+    creationTime              DateTime                 @default(now())
+    updateTime                DateTime                 @updatedAt
+}
+
+/// Represents a reusable template for constructing a chat.
+/// Each template contains a specific set of problems in a defined order.
+model ChatTemplate {
+    id                        Int                      @id @default(autoincrement())
+    name                      String
+    problems                  ChatTemplateProblem[]
+    chats                     Chat[]
+}
+
+/// Represents the link between a ChatTemplate and a specific Problem.
+/// Maintains the order of problems in the template.
+model ChatTemplateProblem {
+    id                        Int                      @id @default(autoincrement())
+    chatTemplate              ChatTemplate             @relation(fields: [chatTemplateId], references: [id], onDelete: Cascade)
+    chatTemplateId            Int
+    problem                   Problem                  @relation(fields: [problemId], references: [problemId], onDelete: Cascade)
+    problemId                 String
+    order                     Int
+}
+
+/// Stores the application settings.
+model Settings {
+    id                        Int                      @id @default(autoincrement())
+    switches                  SettingsSwitch[]
+    global_instructions       String?
+}
+
+/// Represents a settings switch that supports either single-select
+/// (mutually exclusive options) or multi-select modes.
+model SettingsSwitch {
+    id                        Int                      @id @default(autoincrement())
+    settings                  Settings                 @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+    settingsId                Int
+    isEnabled                 Boolean                  @default(true)
+    isMutualExclusive         Boolean                  @default(false)
+    selectedOptionIndex       Int?
+    option1_label             String?
+    option1                   String?
+    option2_label             String?
+    option2                   String?
+    option3_label             String?
+    option3                   String?
+    option4_label             String?
+    option4                   String?
+    option5_label             String?
+    option5                   String?
+}

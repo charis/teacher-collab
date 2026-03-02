@@ -1,0 +1,9 @@
+id,email,name,password,isAdmin,isVerified,forgotPasswordToken,forgotPasswordTokenExpiry,verifyToken,verifyTokenExpiry
+1,test@user.com,BetaUser,$2b$10$LrsCjFMZkkaUdB1uWCBvP.NbKaLhAFeYOuJeXra0dDx5nyhV4u/Za,true,true,null,null,null,null
+2,shuman@stanford.edu,Shuman Wang,$2b$10$J1rkDUYUASs8BRO2jebXDuqxWQJWeIDaqaqu.kofdNne/IWvVU7va,true,true,null,null,null,null
+5,abc@gmail.com,Testing,$2b$10$Ye9t.y2/qxu7q3oQgFVUDunL5M1FgOPSNmpffBFCvZF5j5la4PM/C,true,true,null,null,AX9SR6~f4E-WP742dZ5N6XPrhVWcipIok27MWuw09el77rxJ4F4KdUeoxDNHW-GN,2025-09-26T18:07:06.987Z
+3,wlyeung@stanford.edu,Gordon,$2b$10$dceDVAaM/ieSgdLZsDFM6.mMCFugIhCga.FxoaZ2pOdhqjn5F2hlC,true,true,null,null,null,null
+4,jlangerosuna@gmail.com,jenny,$2b$10$xZ.01mYq0NRhUUFgukhQWeiKipKD/BS3ejSt.xmsBjmYDaKSO7zb2,true,true,null,null,null,null
+7,msuzara@stanford.edu,Miroslav,$2b$10$OuGBDcMj1EjqBYGMRJN8JO.THhdDfWdIBdb9tYJTRhf74gbMH/fb.,true,true,null,null,null,null
+11,neil@test.com,Neil,$2b$10$O3/ZW647Pk9SGR3NS5u.Vehpc8mqwH0JFEG2zfgW1qfBiZ8xcJZXq,false,true,null,null,null,null
+6,charis@stanford.edu,Charis,$2b$10$hAbj9.wb6s7.O3zxC5Tpue15CePruPyCx5mzhVHImKXcOMte.tNVi,false,true,null,null,odkDnqONwJsBP3hnh4GB453Kz3OR6wRGX7cvY~kgUZJ-x2uzTyVxzxqOM07uwYpz,2025-11-23T07:13:52.816Z

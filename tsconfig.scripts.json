@@ -1,0 +1,9 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+      "module": "commonjs",
+      "moduleResolution": "node",
+      "noEmit": true
+    },
+    "include": ["prisma/import-all.ts", "prisma/import-from-csv.ts"]
+}
