@@ -89,7 +89,10 @@ export const authOptions: NextAuthOptions  = {
             if (typeof token.email === "string") {
                 session.user.email = token.email;
             }
-            
+            if (typeof token.isAdmin === "boolean") {
+                session.user.isAdmin = token.isAdmin;
+            }
+
             return session;
           }
     },

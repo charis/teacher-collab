@@ -239,7 +239,7 @@ export default function HomeClient() {
         dbUser = {
             email     : session.user.email ?? "",
             name      : session.user.name ?? "",
-            isAdmin   : false,
+            isAdmin   : session.user.isAdmin ?? false,
             isVerified: false,
             chats     : [],
         };

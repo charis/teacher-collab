@@ -150,7 +150,7 @@ const Topbar:React.FC<TopbarProps> = ({ user,
                 )}
                 
                 {/* --- S E T T I N G S   B U T T O N --- */}
-                {settings && (
+                {settings && user.isAdmin && (
                   <>
                     <div className="cursor-pointer group relative">
                       <button className="text-gray-300 hover:text-white transition"
@@ -194,7 +194,7 @@ const Topbar:React.FC<TopbarProps> = ({ user,
           </div>
         </div>
         
-        {settings && (
+        {settings && user?.isAdmin && (
           <>
             <SettingsModal isOpen     ={settingsOpen}
                            onClose    ={() => setSettingsOpen(false)}
