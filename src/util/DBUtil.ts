@@ -1176,6 +1176,71 @@ export async function updatePersonaInstructions(updates: {
 }
 
 /**
+ * Updates editable fields (description, initialMessage, instructions) for one
+ * or more personas in a single transaction. When the description changes,
+ * also updates the meet-agent intro messages so they reflect the new text.
+ *
+ * @param updates - An array of objects, each containing the personaId and
+ *                  the fields to update
+ *
+ * @returns the number of personas successfully updated
+ *
+ * @throws an error if any personaId is not found or on unexpected database
+ *         errors
+ */
+export async function updatePersonaFields(updates: {
+                                              personaId     : string;
+                                              description?  : string;
+                                              initialMessage?: string;
+                                              instructions? : string | null;
+                                          }[]): Promise<number> {
+    if (!updates || updates.length === 0) {
+        return 0;
+    }
+
+    try {
+        await prisma.$transaction(async (txn) => {
+            for (const update of updates) {
+                // If description changed, also update the meet-agent intro
+                // messages (one per chat) so they reflect the new text.
+                if (update.description !== undefined) {
+                    await txn.message.updateMany({
+                        where: {
+                            agentId     : update.personaId,
+                            transcriptId: null,
+                            role        : Role.ASSISTANT
+                        },
+                        data: { text: update.description }
+                    });
+                }
+
+                const data: Record<string, string | null> = {};
+                if (update.description    !== undefined) data.description    = update.description;
+                if (update.initialMessage !== undefined) data.initialMessage = update.initialMessage;
+                if (update.instructions   !== undefined) data.instructions   = update.instructions;
+
+                if (Object.keys(data).length > 0) {
+                    await txn.persona.update({
+                        where: { personaId: update.personaId },
+                        data
+                    });
+                }
+            }
+        });
+
+        return updates.length;
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            throw new Error(
+                `Failed to update persona fields: ${error.message}`
+            );
+        }
+        throw new Error("Unknown error while updating persona fields");
+    }
+}
+
+/**
  * Updates a user.
  *
  * @param currEmail                 - The current email

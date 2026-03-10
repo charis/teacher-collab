@@ -4,9 +4,10 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Menu, Settings as SettingsIcon } from 'lucide-react';
+import { Menu, Settings as SettingsIcon, Database } from 'lucide-react';
 // Custom imports
 import SettingsModal from "@/components/modal/SettingsModal";
+import DatabaseModal from "@/components/modal/DatabaseModal";
 import LogoutButton from "@/components/topbar/LogoutButton";
 import { SpeechUtil } from "@/util/SpeechUtil";
 import { DBUser, Settings } from "@/types";
@@ -39,6 +40,7 @@ const Topbar:React.FC<TopbarProps> = ({ user,
                                         endSession }) => {
     // ---------------------------   S T A T E   ---------------------------- //
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [dbModalOpen,  setDbModalOpen]  = useState(false);
     
     const hoverEffectClassName = `absolute top-10 left-2/4 -translate-x-2/4 mx-auto bg-dark-layer-1
                                   text-white p-2 rounded shadow-lg z-40 group-hover:scale-100
@@ -166,6 +168,24 @@ const Topbar:React.FC<TopbarProps> = ({ user,
                     </div>
                   </>
                 )}
+
+                {/* --- D A T A B A S E   B U T T O N --- */}
+                {settings && user.isAdmin && (
+                  <>
+                    <div className="cursor-pointer group relative">
+                      <button className="text-gray-300 hover:text-white transition"
+                              title    ="Database Management"
+                              onClick  ={() => setDbModalOpen(true)}
+                      >
+                        <Database size={24} />
+                      </button>
+                      { /* on hover change the scale from 0% (invisible) to 100% */}
+                      <div className={hoverEffectClassName}>
+                        <p className="text-sm text-center">Database</p>
+                      </div>
+                    </div>
+                  </>
+                )}
                 
                 { /* --- P R O F I L E   I M A G E --- */ }
                 <div className="cursor-pointer group relative">
@@ -200,6 +220,9 @@ const Topbar:React.FC<TopbarProps> = ({ user,
                            onClose    ={() => setSettingsOpen(false)}
                            settings   ={settings!}
                            setSettings={setSettings}
+            />
+            <DatabaseModal isOpen ={dbModalOpen}
+                           onClose={() => setDbModalOpen(false)}
             />
           </>
         )}

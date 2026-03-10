@@ -1,5 +1,6 @@
 "use server" // This is required as the nodemailer works only in the backend
              // environment
+
 // Library imports
 // After 'npm install nodemailer' give 'npm i --save-dev @types/nodemailer'
 import nodemailer from 'nodemailer';

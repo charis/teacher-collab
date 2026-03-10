@@ -5,7 +5,7 @@ import { Tabs, TabList, Tab, TabPanel } from "react-tabs";
 import "@/styles/react-tabs.css";
 // Custom imports
 import EscapeHandler from "@/app/hooks/useEscape";
-import { updateSettings, getPersonas, updatePersonaInstructions } from "@/util/DBUtil";
+import { updateSettings, getPersonas, updatePersonaFields } from "@/util/DBUtil";
 import { DBPersona, DBSettingsSwitch, Settings } from "@/types";
 
 type SettingsModalProps = {
@@ -25,6 +25,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
     // Persona state
     const [personas,              setPersonas]              = useState<DBPersona[]>([]);
     const [personaInstructions,   setPersonaInstructions]   = useState<Record<string, string>>({});
+    const [personaDescriptions,   setPersonaDescriptions]   = useState<Record<string, string>>({});
+    const [personaInitialMsgs,    setPersonaInitialMsgs]    = useState<Record<string, string>>({});
     const [isLoadingPersonas,     setIsLoadingPersonas]     = useState(false);
     const [activeTabIndex,        setActiveTabIndex]        = useState(0);
     
@@ -53,11 +55,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
             setPersonas(dbPersonas);
             
             const instructionsMap: Record<string, string> = {};
+            const descriptionsMap: Record<string, string> = {};
+            const initialMsgsMap: Record<string, string> = {};
             for (const persona of dbPersonas) {
                 instructionsMap[persona.personaId] = persona.instructions ?? "";
+                descriptionsMap[persona.personaId] = persona.description ?? "";
+                initialMsgsMap[persona.personaId]  = persona.initialMessage ?? "";
             }
-            
+
             setPersonaInstructions(instructionsMap);
+            setPersonaDescriptions(descriptionsMap);
+            setPersonaInitialMsgs(initialMsgsMap);
             setIsLoadingPersonas(false);
         }
         catch (error) {
@@ -117,23 +125,45 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
             global_instructions: textValue,
         }));
         
-        // 2) Save persona instructions (only changed ones)
-        const updates: { personaId: string; instructions: string | null }[] = [];
+        // 2) Save persona fields (only changed ones)
+        const updates: { personaId: string;
+                         description?: string;
+                         initialMessage?: string;
+                         instructions?: string | null }[] = [];
         for (const persona of personas) {
+            const changed: typeof updates[number] = { personaId: persona.personaId };
+            let hasChanges = false;
+
+            const newDesc = personaDescriptions[persona.personaId] ?? "";
+            if (newDesc !== (persona.description ?? "")) {
+                changed.description = newDesc;
+                hasChanges = true;
+            }
+
+            const newInitMsg = personaInitialMsgs[persona.personaId] ?? "";
+            if (newInitMsg !== (persona.initialMessage ?? "")) {
+                changed.initialMessage = newInitMsg;
+                hasChanges = true;
+            }
+
             const newInstructions = personaInstructions[persona.personaId] ?? "";
-            const oldInstructions = persona.instructions ?? "";
-            if (newInstructions !== oldInstructions) {
-                updates.push({
-                    personaId   : persona.personaId,
-                    instructions: newInstructions.trim() || null
-                });
+            if (newInstructions !== (persona.instructions ?? "")) {
+                changed.instructions = newInstructions.trim() || null;
+                hasChanges = true;
+            }
+
+            if (hasChanges) {
+                updates.push(changed);
             }
         }
-        
+
         if (updates.length > 0) {
-            await updatePersonaInstructions(updates);
+            await updatePersonaFields(updates);
+            // Reload to pick up updated persona data across all views
+            window.location.reload();
+            return;
         }
-        
+
         onClose();
     };
     
@@ -300,26 +330,44 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
                       <p className="text-lg font-semibold">{persona.name}</p>
                     </div>
                     
-                    {/* Description (read-only) */}
+                    {/* Description */}
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1">
                         Description
                       </label>
-                      <p className="text-sm text-gray-200 bg-slate-800 rounded p-3
-                                    border border-slate-600">
-                        {persona.description}
-                      </p>
+                      <textarea
+                        className="w-full px-3 py-2 text-black bg-white rounded border
+                                   border-gray-300 focus:outline-none focus:ring-2
+                                   focus:ring-blue-500"
+                        rows    ={3}
+                        value   ={personaDescriptions[persona.personaId] ?? ""}
+                        onChange={(e) => {
+                          setPersonaDescriptions(prev => ({
+                            ...prev,
+                            [persona.personaId]: e.target.value
+                          }));
+                        }}
+                      />
                     </div>
-                    
-                    {/* Initial Message (read-only) */}
+
+                    {/* Initial Message */}
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1">
                         Initial Message
                       </label>
-                      <p className="text-sm text-gray-200 bg-slate-800 rounded p-3
-                                    border border-slate-600">
-                        {persona.initialMessage}
-                      </p>
+                      <textarea
+                        className="w-full px-3 py-2 text-black bg-white rounded border
+                                   border-gray-300 focus:outline-none focus:ring-2
+                                   focus:ring-blue-500"
+                        rows    ={3}
+                        value   ={personaInitialMsgs[persona.personaId] ?? ""}
+                        onChange={(e) => {
+                          setPersonaInitialMsgs(prev => ({
+                            ...prev,
+                            [persona.personaId]: e.target.value
+                          }));
+                        }}
+                      />
                     </div>
                     
                     {/* Instructions (editable) */}
