@@ -13,6 +13,7 @@ import "@/styles/react-tabs.css";
 interface ChatWindowProps {
     username            : string | null;
     settings            : Settings | null;
+    chatId              : number;
     activeAgentId       : string | null;    
     currProblem         : DBProblem | null;
     currTranscript      : DBTranscript | null;
@@ -34,6 +35,7 @@ interface ChatWindowProps {
 
 export function ChatWindow({ username,
                              settings,
+                             chatId,
                              activeAgentId,
                              currProblem,
                              currTranscript,
@@ -60,6 +62,7 @@ export function ChatWindow({ username,
                   <ChatMessages className            = "px-2 py-3"
                                 username             = {username}
                                 settings             = {settings}
+                                chatId               = {chatId}
                                 activeAgentId        = {activeAgentId}
                                 currProblem          = {currProblem}
                                 currTranscript       = {currTranscript}

@@ -133,12 +133,21 @@ export type DBMessage = {
 };
 
 /**
+ * Excalidraw whiteboard state persisted per learning sequence.
+ */
+export type WhiteboardData = {
+    elements : Record<string, unknown>[];
+    appState?: Record<string, unknown>;
+};
+
+/**
  * LearningSequence as stored in the database.
  */
 export type DBLearningSequence = {
-    chatId    : number;
-    transcript: DBTranscript;
-    messages  : DBMessage[];
+    chatId        : number;
+    transcript    : DBTranscript;
+    messages      : DBMessage[];
+    whiteboardData: WhiteboardData | null;
 };
 
 

@@ -17,7 +17,8 @@ import { DBChat,
          DBTranscript,
          DBUser,
          Gender,
-         Role } from "@/types";
+         Role,
+         WhiteboardData } from "@/types";
 
 // -------------------------------------------------------------------- //
 //      P  R  I  S  M  A     P  A  Y  L  O  A  D     T  Y  P  E  S      //
@@ -1824,6 +1825,42 @@ async function searchForValidToken(token     : string,
     }
 }
 
+// ====================================================================== //
+//                     W H I T E B O A R D                                //
+// ====================================================================== //
+/**
+ * Retrieves the whiteboard data for a specific learning sequence.
+ *
+ * @param chatId       - The chat ID
+ * @param transcriptId - The transcript ID
+ *
+ * @returns the whiteboard data or {@code null} if none exists
+ */
+export async function getWhiteboardData(chatId: number,
+                                        transcriptId: number): Promise<WhiteboardData | null> {
+    const sequence = await prisma.learningSequence.findUnique({
+        where : { chatId_transcriptId: { chatId, transcriptId } },
+        select: { whiteboardData: true }
+    });
+    return (sequence?.whiteboardData as WhiteboardData) ?? null;
+}
+
+/**
+ * Saves whiteboard data for a specific learning sequence.
+ *
+ * @param chatId       - The chat ID
+ * @param transcriptId - The transcript ID
+ * @param data         - The Excalidraw whiteboard data to persist
+ */
+export async function saveWhiteboardData(chatId: number,
+                                         transcriptId: number,
+                                         data: WhiteboardData): Promise<void> {
+    await prisma.learningSequence.update({
+        where: { chatId_transcriptId: { chatId, transcriptId } },
+        data : { whiteboardData: data as unknown as Prisma.JsonObject }
+    });
+}
+
 // ----------------------------------------------- //
 //      M  A  P     F  U  N  C  T  I  O  N  S      //
 // ----------------------------------------------- //
@@ -2095,9 +2132,10 @@ function mapLearningSequenceToDB(learningSequence: LearningSequenceWithTranscrip
     );
     
     return {
-        chatId    : learningSequence.chatId,
-        transcript: dbTranscript,
-        messages  : mappedMessages
+        chatId        : learningSequence.chatId,
+        transcript    : dbTranscript,
+        messages      : mappedMessages,
+        whiteboardData: (learningSequence.whiteboardData as WhiteboardData) ?? null
     };
 };
 

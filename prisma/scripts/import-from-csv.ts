@@ -6,13 +6,18 @@
  *    npx ts-node prisma/import-from-csv.ts User path/to/file.csv
  */
 // @ts-nocheck
-const { PrismaClient } = require('@prisma/client');
-const fs = require('fs');
-const path = require('path');
-const csv = require('csv-parser');
-const { z } = require('zod');
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env.local', override: true });
+import { PrismaClient } from '@prisma/client';
+import fs from 'fs';
+import path from 'path';
+import csv from 'csv-parser';
+import { z } from 'zod';
 
-const prismaClient = new PrismaClient();
+const prismaClient = new PrismaClient({
+    accelerateUrl: process.env.DATABASE_URL,
+});
 
 const VALID_MODELS = [
     'User',
@@ -355,12 +360,19 @@ async function main() {
             }
             else if (modelName === 'LearningSequence') {
                 const learningSequenceSchema = z.object({
-                    chatId      : z.coerce.number(),
-                    transcriptId: z.coerce.number(),
+                    chatId        : z.coerce.number(),
+                    transcriptId  : z.coerce.number(),
+                    whiteboardData: z.string().nullable().optional(),
                 });
-                
+
                 const data = learningSequenceSchema.parse(row);
-                
+
+                let whiteboardData = null;
+                if (data.whiteboardData) {
+                    try { whiteboardData = JSON.parse(data.whiteboardData); }
+                    catch { /* skip invalid JSON */ }
+                }
+
                 await model.upsert({
                     where: {
                         chatId_transcriptId: {
@@ -368,8 +380,12 @@ async function main() {
                             transcriptId: data.transcriptId,
                         },
                     },
-                    update: {},   // Or any fields you want to update
-                    create: data,
+                    update: { whiteboardData },
+                    create: {
+                        chatId        : data.chatId,
+                        transcriptId  : data.transcriptId,
+                        whiteboardData,
+                    },
                 });
             }
             else if (modelName === 'Message') {

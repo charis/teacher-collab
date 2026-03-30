@@ -1,9 +1,13 @@
 // Library imports
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env.local', override: true });
 // Custom imports
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+    accelerateUrl: process.env.DATABASE_URL,
+});
 
 /**
  * Validates and sanitizes a table/column identifier to avoid accidental SQL injection.

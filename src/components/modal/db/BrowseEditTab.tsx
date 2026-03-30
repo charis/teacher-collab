@@ -345,6 +345,18 @@ const BrowseEditTab: React.FC = () => {
      *
      * @returns A human-readable string for the cell (or {@code "—"} for null)
      */
+    /** Max display lengths for specific fields. */
+    const fieldMaxLengths: Record<string, number> = {
+        id                          : 4,
+        email                       : 35,
+        name                        : 30,
+        password                    : 10,
+        forgotPasswordToken         : 10,
+        forgotPasswordTokenExpiry   : 10,
+        verifyToken                 : 10,
+        verifyTokenExpiry           : 10,
+    };
+
     function formatCell(field: FieldDef, value: unknown): string {
         if (value === null || value === undefined) return '—';
         if (field.type === 'date' && value) {
@@ -363,6 +375,10 @@ const BrowseEditTab: React.FC = () => {
             return s.length > 60 ? s.slice(0, 60) + '...' : s;
         }
         const s = String(value);
+        const maxLen = fieldMaxLengths[field.name];
+        if (maxLen && s.length > maxLen) {
+            return s.slice(0, maxLen - 3) + '...';
+        }
         return s.length > 80 ? s.slice(0, 80) + '...' : s;
     }
     
@@ -491,7 +507,7 @@ const BrowseEditTab: React.FC = () => {
                                         }
                             />
                           ) : (
-                            <span className="text-gray-200 break-all"
+                            <span className="text-gray-200 whitespace-nowrap"
                                   title={String(record[field.name] ?? '')}
                             >
                               {formatCell(field, record[field.name])}

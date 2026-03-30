@@ -198,11 +198,12 @@ export const MODEL_META: Record<ModelName, ModelMeta> = {
         primaryKey    : ['chatId', 'transcriptId'],
         sequenceColumn: null,
         fields: [
-            { name: 'chatId',       type: 'number' },
-            { name: 'transcriptId', type: 'number' },
+            { name: 'chatId',         type: 'number' },
+            { name: 'transcriptId',   type: 'number' },
+            { name: 'whiteboardData', type: 'json',   nullable: true },
         ],
     },
-    
+
     Message: {
         name          : 'Message',
         displayName   : 'Messages',

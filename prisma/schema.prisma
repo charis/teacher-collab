@@ -57,11 +57,11 @@
 
 generator client {
     provider = "prisma-client-js"
+    runtime  = "accelerate"
 }
 
 datasource db {
     provider = "postgresql"
-    url      = env("DATABASE_URL")
 }
 
 model User {
@@ -133,7 +133,8 @@ model LearningSequence {
     transcript                Transcript               @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
     transcriptId              Int
     messages                  Message[]
-    
+    whiteboardData            Json?
+
     @@id([chatId, transcriptId]) // Composite primary key
 }
 

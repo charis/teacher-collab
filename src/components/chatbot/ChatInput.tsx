@@ -23,6 +23,7 @@ import { CachedDBPersona,
 
 interface ChatInputProps extends HTMLAttributes<HTMLDivElement> {
     settings            : Settings | null;
+    chatId              : number;
     activeAgentId       : string | null;
     currProblem         : DBProblem | null;
     currTranscript      : DBTranscript | null;
@@ -40,6 +41,7 @@ interface ChatInputProps extends HTMLAttributes<HTMLDivElement> {
 
 export function ChatInput({ className,
                             settings,
+                            chatId,
                             activeAgentId,
                             currProblem,
                             currTranscript,
@@ -83,7 +85,8 @@ export function ChatInput({ className,
                                      saveMessage,
                                      setResponseMessage,
                                      true, // Save the user message to the DB
-                                     currEmbeddedPersonas);
+                                     currEmbeddedPersonas,
+                                     chatId);
         },
         
         onSuccess: async () => {

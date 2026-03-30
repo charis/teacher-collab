@@ -440,7 +440,7 @@ async function importSingleRow(modelName: ModelName,
                             where : { personaId: { in: personaIds } },
                             select: { personaId: true },
                         });
-                        personaConnect = valid.map((p) => ({ personaId: p.personaId }));
+                        personaConnect = valid.map((p: { personaId: string }) => ({ personaId: p.personaId }));
                     }
                 } catch {
                     // Skip persona relation on parse error
@@ -581,10 +581,18 @@ async function importSingleRow(modelName: ModelName,
         
         case 'LearningSequence': {
             const schema = z.object({
-                chatId      : z.coerce.number(),
-                transcriptId: z.coerce.number(),
+                chatId        : z.coerce.number(),
+                transcriptId  : z.coerce.number(),
+                whiteboardData: z.string().nullable().optional(),
             });
             const data = schema.parse(row);
+
+            let whiteboardData = null;
+            if (data.whiteboardData) {
+                try { whiteboardData = JSON.parse(data.whiteboardData); }
+                catch { /* skip invalid JSON */ }
+            }
+
             await prismaInstance.learningSequence.upsert({
                 where: {
                     chatId_transcriptId: {
@@ -592,8 +600,12 @@ async function importSingleRow(modelName: ModelName,
                         transcriptId: data.transcriptId,
                     },
                 },
-                update: {},
-                create: data,
+                update: { whiteboardData },
+                create: {
+                    chatId        : data.chatId,
+                    transcriptId  : data.transcriptId,
+                    whiteboardData,
+                },
             });
             break;
         }

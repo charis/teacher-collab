@@ -243,8 +243,8 @@ const ImportExportTab: React.FC = () => {
     const btnAmber        = `${btnClassName} bg-amber-600 hover:bg-amber-700`;
     
     return (
-        <div className="flex flex-col h-full text-white">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
+        <div className="flex flex-col text-white">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Export Section */}
             <div className="bg-slate-800 rounded-xl p-5 border border-slate-600">
               <h3 className="text-lg font-semibold mb-4">Export</h3>
