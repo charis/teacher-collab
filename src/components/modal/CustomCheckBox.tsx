@@ -1,7 +1,9 @@
 // Library imports
 import React from 'react';
-import {useCheckbox, Chip, VisuallyHidden, tv} from '@heroui/react';
-import { Check } from 'lucide-react'; 
+import {Chip, tv} from '@heroui/react';
+import {useCheckbox} from '@heroui/checkbox';
+import {VisuallyHidden} from '@react-aria/visually-hidden';
+import { Check } from 'lucide-react';
 
 const CheckIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <Check {...props} strokeWidth={3} />
@@ -31,7 +33,7 @@ const CustomCheckBox:React.FC<CustomCheckBoxProps> = ({ label,
         onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
           onValueChange(e.target.checked),
     });
-    
+
     const checkbox = tv({
         slots: {
             base: "border-default hover:bg-default-200",
@@ -51,26 +53,26 @@ const CustomCheckBox:React.FC<CustomCheckBoxProps> = ({ label,
             },
         },
     });
-  
+
     const styles = checkbox({isSelected, isFocusVisible});
-  
+
     return (
         <label {...getBaseProps()}
                 className={`flex items-center h-8 ${className}`}>
-                {/* className={className}> */}
           {/* Visually hidden input for accessibility */}
           <VisuallyHidden>
             <input {...getInputProps()} />
           </VisuallyHidden>
           {/* Display the Chip component with dynamic styling */}
-          <Chip classNames   = {{ base   : `${styles.base()} h-10 flex items-center`,
-                                  content: styles.content() }}
-                color        = "primary"
-                startContent = {isSelected ? <CheckIcon className="ml-1 w-6 h-6" /> : null}
-                variant      = "faded"
+          <Chip className={`${styles.base()} h-10 flex items-center`}
+                color    = "accent"
+                variant  = "secondary"
                 {...getLabelProps()}
           >
-            {label}
+            <span className={styles.content()}>
+              {isSelected && <CheckIcon className="inline ml-1 w-4 h-4 mr-1" />}
+              {label}
+            </span>
           </Chip>
       </label>
     );
