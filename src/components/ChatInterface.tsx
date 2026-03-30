@@ -693,6 +693,7 @@ export function ChatInterface({ username,
             {(activeChatId !== NO_ACTIVE_CHAT_ID) &&
             <MainWindow username              = {username}
                         settings              = {settings}
+                        activeChatId          = {activeChatId}
                         learningSequences     = {learningSequences}
                         activeAgent           = {activeAgent}
                         activeProblemId       = {activeProblemId}

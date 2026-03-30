@@ -1,6 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env.local', override: true });
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+    accelerateUrl: process.env.DATABASE_URL,
+});
 
 async function main() {
     // --------------------------- //

@@ -2,7 +2,7 @@
 import { selectBestPersona } from "@/util/PersonaUtil";
 import { isFixedAgentMode } from "@/util/SettingsUtil";
 import { SpeechUtil } from "@/util/SpeechUtil";
-import { getTagContent, promiseWithTimeout } from "@/util/utils";
+import { promiseWithTimeout } from "@/util/utils";
 import { CachedDBPersona,
          ChatMessage,
          DBPersona,
@@ -11,6 +11,7 @@ import { CachedDBPersona,
          Role,
          Settings } from "@/types";
 import { MIN_INTERACTIONS } from "@/constants";
+import { parseDrawCommands, commandsToElements } from "@/util/WhiteboardUtil";
 
 /**
  * If `true`, we use sentences for text-to-speech conversion. In other words,
@@ -86,18 +87,11 @@ export async function sendMessageWithStreaming(
                          transcriptOrAgentId: number | string,
                          text               : string | null) => void,
     saveUserMessage   : boolean,
-    embeddedPersonas  : CachedDBPersona[]
+    embeddedPersonas  : CachedDBPersona[],
+    chatId?           : number
   ): Promise<void> {
     const oneOnOneWithSingleAgent = agentId !== null;
     const transcriptOrAgentId = oneOnOneWithSingleAgent ? agentId : transcript!.id;
-    
-    const systemPrompt: ChatMessage | null = problem && transcript? {
-        id       : 1, // Don't care - it's not used anywhere
-        role     : Role.SYSTEM,
-        personaId: null,
-        name     : null,
-        text     : getSystemPrompt(embeddedPersonas, problem, transcript)
-    } : null;
     
     const speechUtil = SpeechUtil.getInstance();
     
@@ -199,48 +193,55 @@ export async function sendMessageWithStreaming(
                 remainingPersonas = remainingPersonas.filter(p => !usedPersonaIds.has(p.personaId));
             }
             
-            let instructions = `You must respond strictly as ${selectedPersona.name} `
-                             + `but you do not have to mention your name. According to you: `
-                             + `"${selectedPersona.description}"`;
-            if (settings) {
-                if (settings.global_instructions) {
-                    instructions += settings.global_instructions;
+            // Build system context from global instructions, image descriptions,
+            // and agent notes
+            let systemContext = '';
+
+            const globalInstructions = settings?.global_instructions?.trim() || '';
+            if (globalInstructions) {
+                systemContext += globalInstructions;
+            }
+
+            if (!oneOnOneWithSingleAgent && problem) {
+                let problemImageDesc = problem.imageDescription?.trim() || '';
+                if (!problemImageDesc && problem.imageURL) {
+                    problemImageDesc = await fetchImageDescription('problem', problem.problemId);
                 }
-                const settingsSwitches  = settings.switches.filter((s) => s.isEnabled);
-                for (const currSwitch of settingsSwitches ) {
-                    const selected = currSwitch.selection;
-                    
-                    const appendOption = (index: number) => {
-                        const value = currSwitch[`option${index}` as keyof typeof currSwitch] as
-                                                                                      string | null;
-                        if (value) {
-                            instructions += " " + value;
-                        }
-                    };
-                    
-                    if (currSwitch.isMutualExclusive && typeof selected === 'number') {
-                        appendOption(selected);
-                    }
-                    else if (!currSwitch.isMutualExclusive && Array.isArray(selected)) {
-                        for (const index of selected) {
-                            appendOption(index);
-                        }
-                    }
+                if (problemImageDesc) {
+                    systemContext += `\n\nThe problem includes an image: ${problemImageDesc}`;
+                }
+                if (problem.agentNotes?.trim()) {
+                    systemContext += `\n\nAgent notes for this problem: ${problem.agentNotes}`;
                 }
             }
-            
-            const instructionsMessage: ChatMessage = {
-                id       : 1, // Don't care - it's not used anywhere
-                role     : Role.SYSTEM,
-                personaId: null,
-                name     : null,
-                text     : instructions
-            };
-            
+
+            if (!oneOnOneWithSingleAgent && transcript) {
+                let transcriptImageDesc = transcript.imageDescription?.trim() || '';
+                if (!transcriptImageDesc && transcript.imageURL) {
+                    transcriptImageDesc = await fetchImageDescription('transcript',
+                                                                      String(transcript.id));
+                }
+                if (transcriptImageDesc) {
+                    systemContext += `\n\nThe student's work includes an image: ${transcriptImageDesc}`;
+                }
+                if (transcript.agentNotes?.trim()) {
+                    systemContext += `\n\nAgent notes for this transcript: ${transcript.agentNotes}`;
+                }
+            }
+
+            const systemMessage: ChatMessage | null = systemContext.trim()
+                ? {
+                    id       : 1,
+                    role     : Role.SYSTEM,
+                    personaId: null,
+                    name     : null,
+                    text     : systemContext.trim()
+                }
+                : null;
+
             const messagesIncludingSystemPrompt: ChatMessage[] = [
-                ...(systemPrompt ? [systemPrompt] : []),
+                ...(systemMessage ? [systemMessage] : []),
                 ...annotateMessages(newMessages, numOfAgents),
-                instructionsMessage
             ];
             
             // Send request
@@ -328,6 +329,23 @@ export async function sendMessageWithStreaming(
             await saveMessage(chatMessage,
                               problem?.problemId ?? null,
                               transcriptOrAgentId);
+
+            // Check if the AI response contains whiteboard draw commands
+            if (chatId && typeof transcriptOrAgentId === 'number') {
+                const commands = parseDrawCommands(responseText);
+                if (commands && commands.length > 0) {
+                    const elements = commandsToElements(commands);
+                    fetch('/api/whiteboard/draw', {
+                        method : 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body   : JSON.stringify({
+                            chatId,
+                            transcriptId: transcriptOrAgentId,
+                            elements
+                        })
+                    }).catch(err => console.error('[ChatUtil] Whiteboard draw failed:', err));
+                }
+            }
         }
     }
     catch (error) {
@@ -344,52 +362,6 @@ export async function sendMessageWithStreaming(
 // -------------------------------------------------------------------------- //
 //        H   E   L   P   E   R      F   U   N   C   T   I   O   N   S        //
 // -------------------------------------------------------------------------- //
-/**
- * Generates a system prompt from a list of personas.
- * 
- * @param personas   - The personas to include in the system prompt
- * @param problem    - The problem statement including agent notes
- * @param transcript - The student transcript including agent notes
- */
-function getSystemPrompt(personas  : CachedDBPersona[],
-                         problem   : DBProblem,
-                         transcript: DBTranscript
-): string {
-    let systemPrompt: string;
-    if (personas.length == 0) {
-        return "";
-    }
-    
-    const problemText    = (problem.text ?? "") + (problem.imageDescription ?? "");
-    const transcriptText = (transcript.text ?? "") + (transcript.imageDescription ?? "");
-    
-    if (personas.length == 1) {
-        systemPrompt = `You must respond to the user as the following expert agent:`;
-    }
-    else {
-        systemPrompt = `You must respond as the one of the following ${personas.length} expert agents `
-                     + `that will be specified each time. The expert agents are:`;
-    }
-    systemPrompt += `\n -${personas[0].name}: ${personas[0].description}`
-    for (let i = 1; i < personas.length; i++) {
-        systemPrompt += `\n -${personas[i].name}: ${personas[i].description}`
-    }
-    systemPrompt += `\n\nThe following problem was presented to the student:\n${problemText}`
-    if (problem.agentNotes !== null) {
-        systemPrompt += `\n\nNotes:\n${problem.agentNotes}`
-    }
-    systemPrompt += `\n\nThe student provided the following solution:\n${transcriptText}`
-    if (transcript.agentNotes !== null) {
-        for (let i = 0; i < personas.length; i++) {
-            const agentNotes = getTagContent(transcript.agentNotes, personas[i].personaId);
-            systemPrompt += `\n\n${personas[i].name}, in your responses you must take `
-                          + `into consideration the following :\n${agentNotes}`
-        }
-    }
-    
-    return systemPrompt;
-}
-
 /**
  * Reads the response stream, invokes `onChunk` for each decoded chunk so the
  * caller can append and update UI, and handles TTS queuing/finalization.
@@ -656,6 +628,37 @@ function annotateMessages(messages   : ChatMessage[],
  * 
  * @returns an array of sentence strings
  */
+/**
+ * **Fallback for the prefetch-on-render pattern.**
+ *
+ * Image descriptions are normally prefetched in {@link MainWindow} when
+ * the problem/transcript is first displayed (fire-and-forget). By the time
+ * the user sends a message, the description is usually already cached in the
+ * DB.
+ *
+ * This function acts as a safety net: if the prefetch hasn't completed yet
+ * (e.g., the user typed very quickly), it calls the same lazy endpoint which
+ * either returns the now-cached description or generates one on the spot via
+ * GPT-4o vision (~2-3 s one-time cost) and saves it to the DB for next time.
+ *
+ * @param type - {@code 'problem'} or {@code 'transcript'}
+ * @param id   - The problem ID (string) or transcript ID (number as string)
+ *
+ * @returns the image description, or an empty string on failure
+ */
+async function fetchImageDescription(type: 'problem' | 'transcript',
+                                     id: string): Promise<string> {
+    try {
+        const res = await fetch(`/api/imageDescription?type=${type}&id=${encodeURIComponent(id)}`);
+        if (!res.ok) return '';
+        const { description } = await res.json();
+        return description ?? '';
+    }
+    catch {
+        return '';
+    }
+}
+
 function splitIntoSentences(text: string): string[] {
     const sentenceEndings = /(?<=[.?!;])\s+/g;
     

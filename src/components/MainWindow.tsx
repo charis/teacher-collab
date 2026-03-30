@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Tabs, TabList, Tab, TabPanel } from "react-tabs";
 import Image from 'next/image';
 import "@/styles/react-tabs.css";
+import dynamic from 'next/dynamic';
 // Custom imports
 import QueryProvider from "@/components/QueryProvider";
 import ResponsiveImage from "@/components/ResponsiveImage";
@@ -34,12 +35,14 @@ import { CachedDBPersona,
          Role,
          Settings } from "@/types";
 import { FemaleAvatars, MaleAvatars } from "@/icons/Personas";
+const Whiteboard = dynamic(() => import("@/components/Whiteboard"), { ssr: false });
 import { MIN_INTERACTIONS, TTS_SERVICE_PROVIDER } from "@/constants";
 import type { AvatarComponent } from '@/icons/Personas';
 
 interface MainWindowProps {
     username             : string | null;
     settings             : Settings | null;
+    activeChatId         : number;
     learningSequences    : DBLearningSequence[];
     activeAgent          : DBPersona | null;
     activeProblemId      : string | null;
@@ -62,6 +65,7 @@ interface MainWindowProps {
 
 export function MainWindow({ username,
                              settings,
+                             activeChatId,
                              learningSequences,
                              activeAgent,
                              activeProblemId,
@@ -73,12 +77,23 @@ export function MainWindow({ username,
                              addMessage,
                              setResponseMessage }: MainWindowProps) {
     // ---------------------------   S T A T E   ---------------------------- //
-    const [leftTabIndex,         setLeftTabIndex]         = useState<number>(0);
+    const [leftTabIndex,           setLeftTabIndex]           = useState<number>(0);
     // State to store pre-computed embeddings
-    const [embeddedPersonas,     setEmbeddedPersonas]     = useState<CachedDBPersona[]>([]);
+    const [embeddedPersonas,       setEmbeddedPersonas]       = useState<CachedDBPersona[]>([]);
     // Store the current embedded personas for the current transcript
-    const [currEmbeddedPersonas, setCurrEmbeddedPersonas] = useState<CachedDBPersona[]>([]);
-    const [canProgress,          setCanProgress]          = useState(false);
+    const [currEmbeddedPersonas,   setCurrEmbeddedPersonas]   = useState<CachedDBPersona[]>([]);
+    const [canProgress,            setCanProgress]            = useState(false);
+    const [isWhiteboardFullscreen, setIsWhiteboardFullscreen] = useState(false);
+
+    // Exit whiteboard fullscreen on Escape
+    useEffect(() => {
+        if (!isWhiteboardFullscreen) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setIsWhiteboardFullscreen(false);
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [isWhiteboardFullscreen]);
     const [showCompletionModal,  setShowCompletionModal]  = useState(false);
     const [highlightedText,      setHighlightedText]      = useState<string | null>(null);
     // Index of the currently-displayed transcript for the active problem
@@ -225,7 +240,37 @@ export function MainWindow({ username,
 
         setMinInteractions(minInteractions);
     }, [activeProblem, settings]);
-    
+
+    /**
+     * **Prefetch-on-render pattern for image descriptions.**
+     *
+     * When a problem is displayed, any image without a cached description is
+     * sent to {@code GET /api/imageDescription} which either returns the
+     * existing DB value or generates one via GPT-4o vision and caches it.
+     *
+     * The call is fire-and-forget: by the time the user reads the problem and
+     * types a message, the description is already in the DB for the agent's
+     * system prompt. {@link ChatUtil.fetchImageDescription} acts as a fallback
+     * if the prefetch hasn't finished yet.
+     */
+    useEffect(() => {
+        if (!activeProblem) return;
+
+        // Prefetch problem image description
+        if (activeProblem.imageURL && !activeProblem.imageDescription) {
+            fetch(`/api/imageDescription?type=problem&id=${encodeURIComponent(activeProblem.problemId)}`)
+                .catch(() => {}); // fire-and-forget
+        }
+
+        // Prefetch transcript image descriptions
+        for (const t of activeProblem.transcripts) {
+            if (t.imageURL && !t.imageDescription) {
+                fetch(`/api/imageDescription?type=transcript&id=${t.id}`)
+                    .catch(() => {}); // fire-and-forget
+            }
+        }
+    }, [activeProblem]);
+
     // Helper to get current transcript text (no fallback to transcript.text)
     const currTranscriptText = React.useMemo(() => {
         return activeProblem?.transcripts?.[currTranscriptIndex]?.text ?? "";
@@ -380,9 +425,9 @@ export function MainWindow({ username,
           ) : (
             // Show tabs if no activeAgent
             /*   T A B S   */
-            <Tabs className    ="flex-1 flex flex-col min-h-0 h-full"
-                  selectedIndex={leftTabIndex}
-                  onSelect     ={(i) => setLeftTabIndex(i)}
+            <Tabs className          ="flex-1 flex flex-col min-h-0 h-full"
+                  selectedIndex       ={leftTabIndex}
+                  onSelect            ={(i) => setLeftTabIndex(i)}
             >
               {/* Tabs header row */}
               <div className="flex items-center justify-between gap-4">
@@ -404,6 +449,15 @@ export function MainWindow({ username,
                                           !border-transparent !z-10 !-mb-px"
                   >
                     <span>Transcripts</span>
+                  </Tab>
+                  <Tab className="inline-flex rounded-t-[10px] px-5 py-3 text-xs font-medium
+                                  cursor-pointer bg-white text-cardinal-red border
+                                  border-cardinal-red hover:bg-red-50 transition-all
+                                  duration-150 focus:outline-none focus:ring-0 border-b-0"
+                       selectedClassName="!bg-cardinal-red !text-white
+                                          !border-transparent !z-10 !-mb-px"
+                  >
+                    <span>Whiteboard</span>
                   </Tab>
                 </TabList>
               </div>
@@ -513,6 +567,48 @@ export function MainWindow({ username,
                     </div>
                   </ScrollArea>
                 </TabPanel>
+
+                {/* Whiteboard panel */}
+                <TabPanel className="flex flex-col min-h-0 flex-1">
+                  <div className={isWhiteboardFullscreen
+                    ? "fixed inset-0 z-50 bg-white"
+                    : "flex-1 min-h-0 h-full overflow-hidden relative"
+                  }>
+                    {/* Fullscreen toggle */}
+                    <button
+                      onClick  ={() => setIsWhiteboardFullscreen(prev => !prev)}
+                      className="absolute top-2 right-2 z-[60] p-2 bg-white border
+                                 border-gray-300 rounded shadow hover:bg-gray-100
+                                 transition-colors"
+                      title    ={isWhiteboardFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                    >
+                      {isWhiteboardFullscreen ? (
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+                             stroke="currentColor" strokeWidth="1.5">
+                          <polyline points="5,1 5,5 1,5" />
+                          <polyline points="11,1 11,5 15,5" />
+                          <polyline points="5,15 5,11 1,11" />
+                          <polyline points="11,15 11,11 15,11" />
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+                             stroke="currentColor" strokeWidth="1.5">
+                          <polyline points="1,5 1,1 5,1" />
+                          <polyline points="15,5 15,1 11,1" />
+                          <polyline points="1,11 1,15 5,15" />
+                          <polyline points="15,11 15,15 11,15" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {activeTranscriptId != null && (
+                      <Whiteboard
+                        chatId       = {activeChatId}
+                        transcriptId = {activeTranscriptId}
+                      />
+                    )}
+                  </div>
+                </TabPanel>
               </div>
             </Tabs>
           )}
@@ -584,6 +680,7 @@ export function MainWindow({ username,
             <div className="absolute inset-0 flex flex-col">
               <ChatWindow username             = {username}
                           settings             = {settings}
+                          chatId               = {activeChatId}
                           activeAgentId        = {activeAgent?.personaId ?? null}
                           currProblem          = {activeProblem}
                           currTranscript       = {currTranscript}
@@ -600,6 +697,7 @@ export function MainWindow({ username,
                 <div className="p-2 min-h-32 w-auto bg-white overflow-hidden">
                   <ChatInput className            = "px-4 pb-2"
                              settings             = {settings}
+                             chatId               = {activeChatId}
                              activeAgentId        = {activeAgent?.personaId ?? null}
                              currProblem          = {activeProblem}
                              currTranscript       = {currTranscript}

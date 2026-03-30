@@ -62,4 +62,4 @@ export const TTS_SERVICE_PROVIDER = TextToSpeechProvider.OpenAI;
 export const GENERAL_SYSTEM_PROMPT = process.env.GENERAL_SYSTEM_PROMPT
 
 /** The ChatGPT model */
-export const CHAT_GPT_MODEL = process.env.OPEN_AI_MODEL || 'gpt-3.5-turbo';
+export const CHAT_GPT_MODEL = process.env.OPEN_AI_MODEL || 'gpt-4o';

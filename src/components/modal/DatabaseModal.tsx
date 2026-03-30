@@ -52,10 +52,10 @@ const DatabaseModal: React.FC<DatabaseModalProps> = ({ isOpen, onClose }) => {
         />
 
         {/* Modal Container */}
-        <div className="fixed inset-0 flex items-center justify-center z-50"
+        <div className="fixed inset-0 flex items-start justify-center pt-[5vh] z-50"
              onClick  ={(e) => e.stopPropagation()}
         >
-          <div className="bg-white rounded-lg shadow relative w-[95vw] h-[90vh] mx-4
+          <div className="bg-white rounded-lg shadow relative w-[95vw] max-h-[90vh] mx-4
                           bg-gradient-to-b from-cardinal-red to-slate-900 p-6 flex flex-col"
           >
             {/* Header */}

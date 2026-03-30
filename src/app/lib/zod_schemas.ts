@@ -40,8 +40,8 @@ export const ChatMessageSchema = z.object({
            .describe("role must be 'user', 'assistant', or 'system'"),
     
     content: z.string()
-              .min(1, { message: "content must be 1 character or longer" })
-              .refine(val => !!val, { message: "content is required" }),
+              //.min(1, { message: "content must be 1 character or longer" })
+              //.refine(val => !!val, { message: "content is required" }),
 });
 
 /**

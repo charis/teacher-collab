@@ -25,6 +25,7 @@ import { AvatarComponent,
 interface ChatMessagesProps extends HTMLAttributes<HTMLDivElement> {
     username            : string | null;
     settings            : Settings | null;
+    chatId              : number;
     activeAgentId       : string | null;
     currProblem         : DBProblem | null;
     currTranscript      : DBTranscript | null;
@@ -47,6 +48,7 @@ interface ChatMessagesProps extends HTMLAttributes<HTMLDivElement> {
 export function ChatMessages({ className,
                                username,
                                settings,
+                               chatId,
                                activeAgentId,
                                currProblem,
                                currTranscript,
@@ -462,7 +464,8 @@ export function ChatMessages({ className,
                                            saveMessage,
                                            setResponseMessage,
                                            false, // Do not save user message again
-                                           currEmbeddedPersonas);
+                                           currEmbeddedPersonas,
+                                           chatId);
         }
         catch (error) {
             console.error("Error fetching message response:", error);

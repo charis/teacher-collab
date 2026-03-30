@@ -8,12 +8,17 @@
  *    npx ts-node prisma/export-to-csv.ts
  */
 // @ts-nocheck
-const { PrismaClient } = require('@prisma/client');
-const { createObjectCsvWriter } = require('csv-writer');
-const fs = require('fs');
-const path = require('path');
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env.local', override: true });
+import { PrismaClient } from '@prisma/client';
+import { createObjectCsvWriter } from 'csv-writer';
+import fs from 'fs';
+import path from 'path';
 
-const prismaClient = new PrismaClient();
+const prismaClient = new PrismaClient({
+    accelerateUrl: process.env.DATABASE_URL,
+});
 
 /**
  * Valid model names from your Prisma schema.
