@@ -35,6 +35,9 @@ interface ChatInterfaceProps {
     setActiveTranscriptId  : React.Dispatch<React.SetStateAction<number | null>>;
     setCurrProblemCompleted: React.Dispatch<React.SetStateAction<boolean>>;
     setAllProblemsCompleted: React.Dispatch<React.SetStateAction<boolean>>;
+    categories             : string[];
+    selectedCategory       : string | null;
+    setSelectedCategory    : React.Dispatch<React.SetStateAction<string | null>>;
 }
         
 export function ChatInterface({ username,
@@ -49,7 +52,10 @@ export function ChatInterface({ username,
                                 activeTranscriptId,
                                 setActiveTranscriptId,
                                 setCurrProblemCompleted,
-                                setAllProblemsCompleted }: ChatInterfaceProps) {
+                                setAllProblemsCompleted,
+                                categories,
+                                selectedCategory,
+                                setSelectedCategory }: ChatInterfaceProps) {
     // ---------------------------   S T A T E   ---------------------------- //
     // activeChatMessages => key: transcriptId / value: ChatMessage[]
     const [activeChatMessages,    setActiveChatMessages]    = useState<Record<number, ChatMessage[]>>({});
@@ -686,6 +692,9 @@ export function ChatInterface({ username,
                  setActiveAgent        = {setActiveAgent}
                  isOpen                = {sidebarOpen}
                  settings              = {settings}
+                 categories            = {categories}
+                 selectedCategory      = {selectedCategory}
+                 setSelectedCategory   = {setSelectedCategory}
         />
         
         <div className="flex flex-col flex-grow">

@@ -94,6 +94,7 @@ model Problem {
     id                        Int                      @id @default(autoincrement()) @map("_id")
     problemId                 String                   @unique
     title                     String
+    category                  String                   @default("math")
     text                      String?
     imageURL                  String?
     imageDescription          String?

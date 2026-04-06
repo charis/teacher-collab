@@ -1,5 +1,5 @@
-id,problemId,title,text,imageURL,imageDescription,agentNotes,personas
-1,number_trains,Number Trains,null,/images/problems/math/number_trains.png,"The problem worksheet introduces a context about Sally making number trains. Each train consists of an engine (locomotive) with a number on it, followed by two boxcars, each also containing a number. The visual representation shows train diagrams with the engine on the left and two boxcars attached.
+id,problemId,title,category,text,imageURL,imageDescription,agentNotes,personas
+1,number_trains,Number Trains,math,null,/images/problems/math/number_trains.png,"The problem worksheet introduces a context about Sally making number trains. Each train consists of an engine (locomotive) with a number on it, followed by two boxcars, each also containing a number. The visual representation shows train diagrams with the engine on the left and two boxcars attached.
 The core mathematical rule is: An engine can pull two boxcars ONLY when the product of the two boxcar numbers equals the engine number. For example, engine 12 can pull boxcars with numbers 1 and 12 because 1 × 12 = 12.
 
 The worksheet presents multiple problems:
@@ -43,7 +43,7 @@ For Problem 4 (Engine 36):
 • Then find four OTHER factor pairs of 36: (1, 36), (3, 12), (4, 9), (6, 6)
 • Note: (6, 6) is a special case - the same number twice
 • This requires two-step thinking: first finding the product, then finding different factors","[""Strategy-Focused Teacher"",""Strengths in Student Understanding Teacher"",""Struggles in Student Understanding Teacher""]"
-2,symmetrical_patterns,Symmetrical Patterns,null,/images/problems/math/symmetrical_patterns.png,"This math assessment, titled Symmetrical Patterns, focused on shape recognition and symmetry skills. It outlines a task where students work with symmetrical patterns, with objectives including naming simple shapes and working with symmetry.
+2,symmetrical_patterns,Symmetrical Patterns,math,null,/images/problems/math/symmetrical_patterns.png,"This math assessment, titled Symmetrical Patterns, focused on shape recognition and symmetry skills. It outlines a task where students work with symmetrical patterns, with objectives including naming simple shapes and working with symmetry.
 The page includes two distinct figures, each paired with specific questions:
 First figure (top-right, circular-like pattern) linked to Questions 1 and 2. Question 1 asks to name the shapes used in this pattern. Question 2 requires drawing two lines of symmetry for this pattern.
 The first figure is a symmetric, circular-like pattern with a regular octagon at its center. Around the octagon, there are eight symmetrically arranged sections, alternating between two types: 1. Four sections consist of a rectangle formed by two adjacent squares (aligned with the sides of the central octagon), each extending outward into a triangle. 2. The other four sections consist of a single rectangle (aligned with the diagonals of the central octagon), each also extending outward into a triangle. 
@@ -63,7 +63,7 @@ In this task, the key mathematical learning concepts are:
 • Line of symmetry: A line that divides a shape or pattern so that one half is the mirror image of the other half
 • Radial symmetry: Multiple lines of symmetry that pass through a central point
 • Reflection: The geometric transformation that creates a mirror image across a line","[""Strategy-Focused Teacher"",""Strengths in Student Understanding Teacher"",""Struggles in Student Understanding Teacher""]"
-3,winning_spinners,Winning Spinners,null,/images/problems/math/winning_spinners.png,"The problem presents a probability scenario in the context of a school fair game. Bill must spin two spinners, and he wins a prize if the sum of the two numbers is an even number.
+3,winning_spinners,Winning Spinners,math,null,/images/problems/math/winning_spinners.png,"The problem presents a probability scenario in the context of a school fair game. Bill must spin two spinners, and he wins a prize if the sum of the two numbers is an even number.
 Spinner A is divided into four equal sections containing the numbers: 8, 4, 2, 1 Spinner B is divided into four equal sections containing the numbers: 7, 9, 5, 3
 
 The problem has three parts:
@@ -85,7 +85,7 @@ In this task, the key mathematical concepts are
   1) Even + Even = Even (e.g., 8 + 4 = 12)
   2) Odd + Odd = Even (e.g., 7 + 9 = 16)
   3) Even + Odd = Odd (e.g., 8 + 7 = 15)","[""Strategy-Focused Teacher"",""Strengths in Student Understanding Teacher"",""Struggles in Student Understanding Teacher""]"
-4,time_to_get_clean,Time to Get Clean,null,/images/problems/math/time_to_get_clean.png,"A one-page word-problem worksheet titled ""Time to Get Clean."" A table lists five family members (Megan, Carl, Mom, Dad, Grandpa), their bathroom activities, and the time each takes. Times are in mixed units: fractions of an hour and minutes. Specifically: Megan ( ½ ) hour, Carl 20 minutes, Mom ( 3/4) hour, Dad 50 minutes, Grandpa 35 minutes. Below the table are five prompts:
+4,time_to_get_clean,Time to Get Clean,math,null,/images/problems/math/time_to_get_clean.png,"A one-page word-problem worksheet titled ""Time to Get Clean."" A table lists five family members (Megan, Carl, Mom, Dad, Grandpa), their bathroom activities, and the time each takes. Times are in mixed units: fractions of an hour and minutes. Specifically: Megan ( ½ ) hour, Carl 20 minutes, Mom ( 3/4) hour, Dad 50 minutes, Grandpa 35 minutes. Below the table are five prompts:
 • Question 1: ""Who spends the most time…?""
 • Question 2: ""Who spends the shortest time…?""
 • Question 3: ""How long do Dad and Grandpa spend…in all? Show how you figured this out.""

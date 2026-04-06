@@ -317,6 +317,28 @@ export async function getProblem(problemId: string):
 }
 
 /**
+ * Retrieves all distinct category values from the Problem table.
+ *
+ * @returns an array of unique category strings, sorted alphabetically
+ */
+export async function getProblemCategories(): Promise<string[]> {
+    try {
+        const results = await prisma.problem.findMany({
+            select  : { category: true },
+            distinct: ['category'],
+            orderBy : { category: 'asc' },
+        });
+        return results.map(r => r.category);
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            throw new Error(`Error fetching problem categories: ${error.message}`);
+        }
+        throw new Error("Unknown error fetching problem categories");
+    }
+}
+
+/**
  * Fetches a user by email and optionally loads their chats, mapping the result
  * to the {@link DBUser} domain model.
  * 
@@ -2006,16 +2028,18 @@ function mapProblemToDB(problem: Prisma.ProblemGetPayload<{
     const parentProblem: Omit<DBProblem, "transcripts"> = {
         problemId       : problem.problemId,
         title           : problem.title,
+        category        : problem.category,
         text            : problem.text ?? null,
         imageURL        : problem.imageURL ?? null,
         imageDescription: problem.imageDescription ?? null,
         agentNotes      : problem.agentNotes ?? null,
         personas        : mappedPersonas,
     };
-    
+
     return {
         problemId       : problem.problemId,
         title           : problem.title,
+        category        : problem.category,
         text            : problem.text ?? null,
         imageURL        : problem.imageURL ?? null,
         imageDescription: problem.imageDescription ?? null,
@@ -2104,6 +2128,7 @@ function mapLearningSequenceToDB(learningSequence: LearningSequenceWithTranscrip
     const parentProblemWithoutTranscripts: Omit<DBProblem, "transcripts"> = {
         problemId       : learningSequence.transcript.problem.problemId,
         title           : learningSequence.transcript.problem.title,
+        category        : learningSequence.transcript.problem.category,
         text            : learningSequence.transcript.problem.text ?? null,
         imageURL        : learningSequence.transcript.problem.imageURL ?? null,
         imageDescription: learningSequence.transcript.problem.imageDescription ?? null,
