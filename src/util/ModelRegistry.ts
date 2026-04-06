@@ -153,6 +153,7 @@ export const MODEL_META: Record<ModelName, ModelMeta> = {
             { name: 'id',               type: 'number',  readOnly: true },
             { name: 'problemId',        type: 'string'                  },
             { name: 'title',            type: 'string'                  },
+            { name: 'category',         type: 'string'                  },
             { name: 'text',             type: 'string',  nullable: true },
             { name: 'imageURL',         type: 'string',  nullable: true },
             { name: 'imageDescription', type: 'string',  nullable: true },

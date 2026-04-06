@@ -98,6 +98,7 @@ export type CachedDBPersona = DBPersona & {
 export type DBProblem = {
     problemId  : string;
     title           : string;
+    category        : string;
     text            : string | null;
     imageURL        : string | null;
     imageDescription: string | null;

@@ -14,7 +14,10 @@ interface SidebarProps {
     activeAgent          : DBPersona | null;
     setActiveAgent       : React.Dispatch<React.SetStateAction<DBPersona | null>>;
     isOpen               : boolean;
-    settings             : Settings | null; 
+    settings             : Settings | null;
+    categories           : string[];
+    selectedCategory     : string | null;
+    setSelectedCategory  : React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 /**
@@ -41,20 +44,24 @@ export function Sidebar({activeChat,
                          activeAgent,
                          setActiveAgent,
                          isOpen,
-                         settings}: SidebarProps) {
+                         settings,
+                         categories,
+                         selectedCategory,
+                         setSelectedCategory}: SidebarProps) {
     type ProblemSummary = {
         id          : string;
         title       : string;
+        category    : string;
         transcriptId: number;
         isComplete  : boolean;
     };
-    
+
     // ----------------------------   M E M O   ----------------------------- //
     // Compute problems summary from activeChat's learning sequences
     const problems: ProblemSummary[] = useMemo(() => {
         const dbLearningSequences = activeChat?.learningSequences ?? [];
         const lookup = new Map<string, ProblemSummary>();
-        
+
         dbLearningSequences.forEach(dbLearningSequence => {
             const dbTranscript = dbLearningSequence.transcript;
             const dbMessages   = dbLearningSequence.messages;
@@ -63,8 +70,9 @@ export function Sidebar({activeChat,
                 return;
             }
             const title        = dbTranscript.problem.title;
+            const category     = dbTranscript.problem.category;
             const transcriptId = dbTranscript.id;
-            
+
             const numOfPersonas = dbTranscript.problem.personas.length;
             let minInteractions = MIN_INTERACTIONS;
             if (isFixedAgentMode(settings) && numOfPersonas > 1) {
@@ -72,11 +80,12 @@ export function Sidebar({activeChat,
             }
             const isComplete = (dbMessages ?? []).filter(msg => msg.role === Role.USER)
                                                  .length >= minInteractions;
-            
+
             if (!lookup.has(problemId)) {
                 const problemSummary = {
                     id          : problemId,
                     title       : title,
+                    category    : category,
                     transcriptId: transcriptId,
                     isComplete  : isComplete
                 };
@@ -88,15 +97,25 @@ export function Sidebar({activeChat,
             }
         });
 
-        return Array.from(lookup.values());
-    }, [activeChat, settings]);
+        // Filter by selected category
+        let result = Array.from(lookup.values());
+        if (selectedCategory) {
+            result = result.filter(p => p.category === selectedCategory);
+        }
+        return result;
+    }, [activeChat, settings, selectedCategory]);
     
-    // Compute unique agents (DBPersona) participating in this chat
+    // Compute unique agents (DBPersona) from visible (filtered) problems
     const agents: DBPersona[] = useMemo(() => {
         const dbLearningSequences = activeChat?.learningSequences ?? [];
-        const personaLookup = new Map<string, DBPersona>(); // personaId -> DBPersona
-        
+        const visibleProblemIds = new Set(problems.map(p => p.id));
+        const personaLookup = new Map<string, DBPersona>();
+
         dbLearningSequences.forEach(ls => {
+            const problemId = ls?.transcript?.problem?.problemId;
+            if (!problemId || !visibleProblemIds.has(problemId)) {
+                return;
+            }
             const personas = ls?.transcript?.problem?.personas ?? [];
             personas.forEach(persona => {
                 if (!personaLookup.has(persona.personaId)) {
@@ -104,9 +123,9 @@ export function Sidebar({activeChat,
                 }
             });
         });
-        
+
         return Array.from(personaLookup.values());
-    }, [activeChat]);
+    }, [activeChat, problems]);
     
     // Compute width based on longest name (ch units)
     const agentButtonWidth = useMemo(() => {
@@ -122,7 +141,23 @@ export function Sidebar({activeChat,
     return (
       <div className="w-64 bg-gray-900 text-white p-4 flex flex-col h-full">
         <div className="flex-grow overflow-auto">
-          {/* MEET THE AGENTS section (same look as other header) */}
+          {/* CATEGORY FILTER */}
+          <h2 className="text-lg text-gray-400 mb-2 px-2">CATEGORY</h2>
+          <div className="mb-4 px-2">
+            <select value    ={selectedCategory ?? ''}
+                    onChange  ={(e) => setSelectedCategory(e.target.value || null)}
+                    className="w-full bg-gray-800 text-white border border-gray-700
+                               rounded px-2 py-1 text-sm focus:outline-none
+                               focus:border-gray-500"
+            >
+              <option value="">All Categories</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* MEET THE AGENTS section */}
           <h2 className="text-lg text-gray-400 mb-2 px-2">
             MEET THE AGENTS
           </h2>

@@ -179,6 +179,7 @@ async function main() {
                     id               : z.coerce.number(),
                     problemId        : z.string(),
                     title            : z.string(),
+                    category         : z.string().optional().default('math'),
                     text             : z.string().nullable().optional(),
                     imageURL         : z.string().nullable().optional(),
                     imageDescription : z.string().nullable().optional(),

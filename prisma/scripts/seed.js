@@ -199,6 +199,7 @@ async function main() {
         {
             problemId       : "number_trains",
             title           : "Number Trains",
+            category        : "math",
             text            : null,
             imageURL        : "/images/problems/math/number_trains.png",
             imageDescription: imageDescription_number_trains,
@@ -210,6 +211,7 @@ async function main() {
         {
             problemId       : "symmetrical_patterns",
             title           : "Symmetrical Patterns",
+            category        : "math",
             text            : null,
             imageURL        : "/images/problems/math/symmetrical_patterns.png",
             imageDescription: imageDescription_symmetrical_patterns,
@@ -221,6 +223,7 @@ async function main() {
         {
             problemId       : "winning_spinners",
             title           : "Winning Spinners",
+            category        : "math",
             text            : null,
             imageURL        : "/images/problems/math/winning_spinners.png",
             imageDescription: imageDescription_winning_spinners,
@@ -232,6 +235,7 @@ async function main() {
         {
             problemId       : "time_to_get_clean",
             title           : "Time to Get Clean",
+            category        : "math",
             text            : null,
             imageURL        : "/images/problems/math/time_to_get_clean.png",
             imageDescription: imageDescription_time_to_get_clean,
@@ -257,6 +261,7 @@ async function main() {
             create: {
                 problemId       : problem.problemId,
                 title           : problem.title,
+                category        : problem.category,
                 imageURL        : problem.imageURL,
                 imageDescription: problem.imageDescription,
                 text            : problem.text,

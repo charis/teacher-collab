@@ -11,6 +11,7 @@ import { ChatInterface } from "@/components/ChatInterface";
 import { createChat,
          getChatTemplate,
          getChats,
+         getProblemCategories,
          getSettings,
          updateChat } from '@/util/DBUtil';
 import { DBChat, DBProblem, DBUser, Settings } from "@/types";
@@ -26,6 +27,8 @@ export default function HomeClient() {
     const [currProblemCompleted, setCurrProblemCompleted] = useState(false);
     const [allProblemsCompleted, setAllProblemsCompleted] = useState(false);
     const [sidebarOpen,          setSidebarOpen]          = useState(true);
+    const [categories,           setCategories]           = useState<string[]>([]);
+    const [selectedCategory,     setSelectedCategory]     = useState<string | null>(null);
     
     const { data: session, status } = useSession();
     const authenticated = status === "authenticated";
@@ -52,6 +55,7 @@ export default function HomeClient() {
         }
         
         loadSettings();
+        loadCategories();
         init();
         
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -121,6 +125,16 @@ export default function HomeClient() {
         }
     }
     
+    async function loadCategories(): Promise<void> {
+        try {
+            const cats = await getProblemCategories();
+            setCategories(cats);
+        }
+        catch (error) {
+            console.error("Error loading categories:", error);
+        }
+    }
+
     // Loads the chats from the database and sets the active chat
     async function loadChats(userEmail: string): Promise<DBChat | null> {
         const dbChats = await getChats(userEmail, false);
@@ -275,6 +289,9 @@ export default function HomeClient() {
                            setActiveTranscriptId   = {setActiveTranscriptId}
                            setCurrProblemCompleted = {setCurrProblemCompleted}
                            setAllProblemsCompleted = {setAllProblemsCompleted}
+                           categories              = {categories}
+                           selectedCategory        = {selectedCategory}
+                           setSelectedCategory     = {setSelectedCategory}
             />
           </div>
         ) : (
