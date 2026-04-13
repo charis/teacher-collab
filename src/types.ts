@@ -173,6 +173,7 @@ export type DBChat = {
 export type DBChatTemplate = {
     id        : number;
     name      : string;
+    category  : string | null;
     problemIds: string[];
 };
 

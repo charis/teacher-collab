@@ -353,6 +353,50 @@ async function main() {
                                "student_interaction_and_guided_discovery",
                                "communication_and_learning_environment",
                                "technical_accuracy_and_debugging"]
+        },
+        {
+            problemId       : "hailstone_sequence",
+            title           : "Hailstone Sequence",
+            categoryName    : "cs",
+            text            : dedent`Douglas Hofstadter's Pulitzer-prize-winning book Gödel, Escher, Bach contains many interesting mathematical puzzles. In Chapter XII, Hofstadter mentions a wonderful problem:
+
+                Pick some positive integer and call it n.
+                If n is even, divide it by two.
+                If n is odd, multiply it by three and add one.
+                Continue this process until n is equal to one.
+
+                Here is an example:
+                Enter a number: 15
+                15 is odd, so I make 3n + 1: 46
+                46 is even, so I take half: 23
+                23 is odd, so I make 3n + 1: 70
+                70 is even, so I take half: 35
+                35 is odd, so I make 3n + 1: 106
+                106 is even, so I take half: 53
+                53 is odd, so I make 3n + 1: 160
+                160 is even, so I take half: 80
+                80 is even, so I take half: 40
+                40 is even, so I take half: 20
+                20 is even, so I take half: 10
+                10 is even, so I take half: 5
+                5 is odd, so I make 3n + 1: 16
+                16 is even, so I take half: 8
+                8 is even, so I take half: 4
+                4 is even, so I take half: 2
+                2 is even, so I take half: 1
+
+                As you can see from this example, the numbers go up and down, but eventually — at least for all numbers that have ever been tried — come down to end in 1. Because of this analogy, this sequence of numbers is usually called the Hailstone sequence.
+
+                Your Task: Write a program that reads in a number from the user and then displays the Hailstone sequence for that number.
+
+                The fascinating thing about this problem is that no one has yet been able to prove that it always stops. This problem (often referred to in math as the Collatz Conjecture) is one of the most famous unsolved problems in math.`,
+            imageURL        : null,
+            imageDescription: null,
+            agentNotes      : "This is a CS debugging problem. Students were asked to write a Python program that computes the Hailstone sequence for a given input. The correct solution uses a while loop with condition 'while n != 1', and inside the loop checks if n is even (divide by 2) or odd (multiply by 3 and add 1). Four student solutions are provided as transcripts, each containing different bugs. The candidate should evaluate the student code, identify bugs, and explain how to fix them in a teaching-oriented way.",
+            personaIds      : ["problem_decomposition_and_lesson_design",
+                               "student_interaction_and_guided_discovery",
+                               "communication_and_learning_environment",
+                               "technical_accuracy_and_debugging"]
         }
     ];
 
@@ -810,6 +854,104 @@ async function main() {
             imageURL        : "/images/transcripts/math/time_to_get_clean_studentC.png",
             imageDescription: imageDescription_time_to_get_clean_studentC,
             agentNotes      : null, //agentNotes_time_to_get_clean_studentC,
+        },
+        // ---- CS Transcripts: Hailstone Sequence ---- //
+        {
+            problemId       : "hailstone_sequence",
+            text            : dedent`Student Solution - Example 1:
+
+                n = int(input("Enter a number: "))
+                count = 1
+                while count <= n:
+                    if n % 2 == 0:
+                        n = n // 2
+                        print(n)
+                    else:
+                        n = 3 * n + 1
+                        print(n)
+                    count += 1`,
+            imageURL        : null,
+            imageDescription: null,
+            agentNotes      : dedent`Bug analysis for Example 1:
+                - The loop condition 'while count <= n' is incorrect. The variable 'n' changes every iteration (it's the hailstone value being computed), so using it as the loop bound makes the loop terminate unpredictably. The loop should continue 'while n != 1' instead.
+                - The counter variable 'count' is unnecessary for the basic hailstone sequence — the loop should be driven by the value of n reaching 1.
+                - The student does not print the initial value of n before entering the loop.
+                - The logic inside the loop (even/odd checks and transformations) is correct.
+                - This is a conceptual error about loop control — the student conflated "counting steps" with "checking the termination condition."`,
+        },
+        {
+            problemId       : "hailstone_sequence",
+            text            : dedent`Student Solution - Example 2:
+
+                n = int(input("Enter a number: "))
+                if n % 2 == 0:
+                    n = n // 2
+                    print(n)
+                else:
+                    n = 3 * n + 1
+                    print(n)`,
+            imageURL        : null,
+            imageDescription: null,
+            agentNotes      : dedent`Bug analysis for Example 2:
+                - There is no loop at all. The student only performs one step of the hailstone sequence using a single if/else, then the program ends.
+                - The even/odd logic is correct for a single step, but the program needs to repeat until n equals 1.
+                - The student likely understands the conditional logic but does not yet understand that a while loop is needed to repeat the process.
+                - This is a fundamental structural error — missing iteration entirely.
+                - The student does not print the initial value of n.`,
+        },
+        {
+            problemId       : "hailstone_sequence",
+            text            : dedent`Student Solution - Example 3:
+
+                n = int(input("Enter a number: "))
+                while n % 2 != 0:
+                    n = 3 * n + 1
+                    print(n)
+                    if n % 2 == 0:
+                        n = n // 2
+                        print(n)`,
+            imageURL        : null,
+            imageDescription: null,
+            agentNotes      : dedent`Bug analysis for Example 3:
+                - The while loop condition 'while n % 2 != 0' only runs when n is odd. If the initial input is even, the loop never executes at all.
+                - The nested if inside the while handles the even case, but only once per odd iteration — it doesn't continue the sequence properly.
+                - The loop will exit as soon as n becomes even after the inner if executes, because the while condition checks odd only.
+                - The student seems to understand both transformations but has structured the loop incorrectly — they nested the even case inside the odd case instead of using a single loop with both branches.
+                - The correct approach is 'while n != 1' with if/else for even/odd inside.
+                - The student does not print the initial value of n.`,
+        },
+        {
+            problemId       : "hailstone_sequence",
+            text            : dedent`Student Solution - Example 4:
+
+                n = int(input("Enter a number: "))
+                if n == 7:
+                    print(7)
+                    print(22)
+                    print(11)
+                    print(34)
+                    print(17)
+                    print(52)
+                    print(26)
+                    print(13)
+                    print(40)
+                    print(20)
+                    print(10)
+                    print(5)
+                    print(16)
+                    print(8)
+                    print(4)
+                    print(2)
+                    print(1)`,
+            imageURL        : null,
+            imageDescription: null,
+            agentNotes      : dedent`Bug analysis for Example 4:
+                - This is a hardcoded solution that only works for the input 7. It prints the correct hailstone sequence for n=7 but fails for every other input.
+                - There is no loop and no computation — the student manually traced the sequence and hardcoded each print statement.
+                - For any input other than 7, the program does nothing (no output).
+                - This reveals a fundamental misunderstanding of generalization — the student can trace the algorithm by hand but cannot translate it into a general program.
+                - This is a common beginner mistake: solving one specific case instead of writing a general solution.
+                - Good teaching opportunity: ask the student what happens if the input is 15, or 27, to help them see why hardcoding doesn't work.`,
         }
     ]
     
@@ -863,7 +1005,8 @@ async function main() {
     // Create the template first
     const chatTemplate = await prisma.chatTemplate.create({
         data: {
-            name: "Math Concepts Template",
+            name        : "Math Concepts Template",
+            categoryName: "math",
         },
     });
     
@@ -874,7 +1017,7 @@ async function main() {
         if (!problem) {
             continue;
         }
-        
+
         // Link each problemId to the template with order preserved
         await prisma.chatTemplateProblem.create({
             data: {
@@ -884,7 +1027,42 @@ async function main() {
             },
         });
     }
-    console.log("✅ ChatTemplate and linked transcripts created");
+    console.log("✅ Math ChatTemplate created");
+
+    // CS Chat Template
+    const csProblemIds = [
+        "meet-the-agents_problem_decomposition_and_lesson_design",
+        "meet-the-agents_student_interaction_and_guided_discovery",
+        "meet-the-agents_communication_and_learning_environment",
+        "meet-the-agents_technical_accuracy_and_debugging",
+        "longest_common_subsequence",
+        "hailstone_sequence"
+    ];
+
+    const csChatTemplate = await prisma.chatTemplate.create({
+        data: {
+            name        : "CS Concepts Template",
+            categoryName: "cs",
+        },
+    });
+
+    for (const [index, problemId] of csProblemIds.entries()) {
+        const problem = await prisma.problem.findFirst({
+            where: { problemId: problemId },
+        });
+        if (!problem) {
+            continue;
+        }
+
+        await prisma.chatTemplateProblem.create({
+            data: {
+                chatTemplateId: csChatTemplate.id,
+                problemId     : problemId,
+                order         : index,
+            },
+        });
+    }
+    console.log("✅ CS ChatTemplate created");
     
     // --------------------------- //
     //    S  E  T  T  I  N  G  S   //

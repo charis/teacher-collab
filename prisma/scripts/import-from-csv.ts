@@ -280,8 +280,9 @@ async function main() {
             }
             else if (modelName === 'ChatTemplate') {
                 const chatTemplateSchema = z.object({
-                    id  : z.coerce.number(),
-                    name: z.string(),
+                    id          : z.coerce.number(),
+                    name        : z.string(),
+                    categoryName: z.string().nullable().optional(),
                 });
                 
                 const data = chatTemplateSchema.parse(row);

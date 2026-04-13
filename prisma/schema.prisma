@@ -82,6 +82,7 @@ model Category {
     name                      String                   @id
     personas                  Persona[]
     problems                  Problem[]
+    chatTemplates             ChatTemplate[]
 }
 
 model Persona {
@@ -171,6 +172,8 @@ model Message {
 model ChatTemplate {
     id                        Int                      @id @default(autoincrement())
     name                      String
+    category                  Category?                @relation(fields: [categoryName], references: [name])
+    categoryName              String?
     problems                  ChatTemplateProblem[]
     chats                     Chat[]
 }

@@ -245,8 +245,9 @@ export const MODEL_META: Record<ModelName, ModelMeta> = {
         primaryKey    : 'id',
         sequenceColumn: 'id',
         fields: [
-            { name: 'id',   type: 'number', readOnly: true },
-            { name: 'name', type: 'string'                 },
+            { name: 'id',           type: 'number', readOnly: true },
+            { name: 'name',         type: 'string'                 },
+            { name: 'categoryName', type: 'string', nullable: true },
         ],
     },
     

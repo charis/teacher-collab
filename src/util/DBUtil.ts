@@ -503,23 +503,25 @@ export async function getChats(email          : string,
  * 
  * @throws an error on unexpected database errors
  */
-export async function getChatTemplate(userEmail: string): Promise<DBChatTemplate | null> {
+export async function getChatTemplate(userEmail: string,
+                                      category?: string): Promise<DBChatTemplate | null> {
     try {
         // Get the user and their ID
         const user = await prisma.user.findUnique({
             where : { email: userEmail },
             select: { id: true },
         });
-        
+
         if (!user) {
             return null // No user found with the given email
         }
-        
+
         // Find the earliest template (lowest id) that either has no chats OR
         // whose chats all belong to other users.
-        // We use a relational filter with `none` / `every` to push logic into the DB.
+        // Optionally filter by category if provided.
         const template = await prisma.chatTemplate.findFirst({
             where: {
+                ...(category ? { categoryName: category } : {}),
                 OR: [
                     {
                         chats: { none: {} } // no chats
@@ -537,7 +539,6 @@ export async function getChatTemplate(userEmail: string): Promise<DBChatTemplate
                         problemId: true,
                         order    : true,
                     },
-                    // make sure problems are returned in the intended order
                     orderBy: { order: 'asc' },
                 },
                 chats: {
@@ -545,15 +546,16 @@ export async function getChatTemplate(userEmail: string): Promise<DBChatTemplate
                 },
             },
         });
-        
+
         if (!template) {
             return null;
         }
-        
+
         return {
             id        : template.id,
             name      : template.name,
-            problemIds: template.problems.map(problem => problem.problemId), // already ordered by 'order'
+            category  : template.categoryName ?? null,
+            problemIds: template.problems.map((problem: { problemId: string }) => problem.problemId),
         };
     }
     catch (error) {
