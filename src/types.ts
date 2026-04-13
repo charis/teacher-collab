@@ -78,6 +78,8 @@ export type DBPersona = {
     description   : string;
     initialMessage: string;
     instructions  : string | null;
+    skills        : string | null;
+    category      : string;
 };
 
 /**

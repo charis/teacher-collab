@@ -123,6 +123,8 @@ type SelectedFieldsFromPersona = Prisma.PersonaGetPayload<{
         description   : true
         initialMessage: true
         instructions  : true
+        skills        : true
+        categoryName  : true
     };
 }>;
 
@@ -218,7 +220,9 @@ export async function getPersona(personaId: string):
                 gender        : true,
                 description   : true,
                 initialMessage: true,
-                instructions  : true
+                instructions  : true,
+                skills        : true,
+                categoryName  : true
             }
         });
         
@@ -254,7 +258,9 @@ export async function getPersonas(): Promise<DBPersona[]> {
                 gender        : true,
                 description   : true,
                 initialMessage: true,
-                instructions  : true
+                instructions  : true,
+                skills        : true,
+                categoryName  : true
             }
         });
         
@@ -317,18 +323,16 @@ export async function getProblem(problemId: string):
 }
 
 /**
- * Retrieves all distinct category values from the Problem table.
+ * Retrieves all category names from the Category table.
  *
- * @returns an array of unique category strings, sorted alphabetically
+ * @returns an array of category strings, sorted alphabetically
  */
 export async function getProblemCategories(): Promise<string[]> {
     try {
-        const results = await prisma.problem.findMany({
-            select  : { category: true },
-            distinct: ['category'],
-            orderBy : { category: 'asc' },
+        const results = await prisma.category.findMany({
+            orderBy: { name: 'asc' },
         });
-        return results.map(r => r.category);
+        return results.map(r => r.name);
     }
     catch (error) {
         if (error instanceof Error) {
@@ -1901,7 +1905,9 @@ function mapPersonaToDB(persona: SelectedFieldsFromPersona): DBPersona {
         gender        : persona.gender as Gender,
         description   : persona.description,
         initialMessage: persona.initialMessage,
-        instructions  : persona.instructions ?? null
+        instructions  : persona.instructions ?? null,
+        skills        : persona.skills ?? null,
+        category      : persona.categoryName
     };
 };
 
@@ -2028,7 +2034,7 @@ function mapProblemToDB(problem: Prisma.ProblemGetPayload<{
     const parentProblem: Omit<DBProblem, "transcripts"> = {
         problemId       : problem.problemId,
         title           : problem.title,
-        category        : problem.category,
+        category        : problem.categoryName,
         text            : problem.text ?? null,
         imageURL        : problem.imageURL ?? null,
         imageDescription: problem.imageDescription ?? null,
@@ -2039,7 +2045,7 @@ function mapProblemToDB(problem: Prisma.ProblemGetPayload<{
     return {
         problemId       : problem.problemId,
         title           : problem.title,
-        category        : problem.category,
+        category        : problem.categoryName,
         text            : problem.text ?? null,
         imageURL        : problem.imageURL ?? null,
         imageDescription: problem.imageDescription ?? null,
@@ -2128,7 +2134,7 @@ function mapLearningSequenceToDB(learningSequence: LearningSequenceWithTranscrip
     const parentProblemWithoutTranscripts: Omit<DBProblem, "transcripts"> = {
         problemId       : learningSequence.transcript.problem.problemId,
         title           : learningSequence.transcript.problem.title,
-        category        : learningSequence.transcript.problem.category,
+        category        : learningSequence.transcript.problem.categoryName,
         text            : learningSequence.transcript.problem.text ?? null,
         imageURL        : learningSequence.transcript.problem.imageURL ?? null,
         imageDescription: learningSequence.transcript.problem.imageDescription ?? null,

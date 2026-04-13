@@ -20,6 +20,7 @@ const prismaClient = new PrismaClient({
 });
 
 const VALID_MODELS = [
+    'Category',
     'User',
     'Persona',
     'Problem',
@@ -101,6 +102,17 @@ async function main() {
                     create: { id, ...userData }, // Create with the same id as in CSV file
                 });
             }
+            else if (modelName === 'Category') {
+                const categorySchema = z.object({
+                    name: z.string(),
+                });
+                data = categorySchema.parse(row);
+                await model.upsert({
+                    where : { name: data.name },
+                    update: {},
+                    create: data,
+                });
+            }
             else if (modelName === 'Persona') {
                 const personaSchema = z.object({
                     id            : z.coerce.number(),
@@ -110,8 +122,10 @@ async function main() {
                     description   : z.string(),
                     initialMessage: z.string(),
                     instructions  : z.string().nullable().optional(),
+                    skills        : z.string().nullable().optional(),
+                    categoryName  : z.string(),
                 });
-                
+
                 data = personaSchema.parse(row); // throws if data is invalid
                 const { id, ...personaData } = data;
                 
@@ -179,7 +193,7 @@ async function main() {
                     id               : z.coerce.number(),
                     problemId        : z.string(),
                     title            : z.string(),
-                    category         : z.string().optional().default('math'),
+                    categoryName     : z.string().optional().default('math'),
                     text             : z.string().nullable().optional(),
                     imageURL         : z.string().nullable().optional(),
                     imageDescription : z.string().nullable().optional(),

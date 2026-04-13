@@ -1,4 +1,4 @@
-id,problemId,title,category,text,imageURL,imageDescription,agentNotes,personas
+id,problemId,title,categoryName,text,imageURL,imageDescription,agentNotes,personas
 1,number_trains,Number Trains,math,null,/images/problems/math/number_trains.png,"The problem worksheet introduces a context about Sally making number trains. Each train consists of an engine (locomotive) with a number on it, followed by two boxcars, each also containing a number. The visual representation shows train diagrams with the engine on the left and two boxcars attached.
 The core mathematical rule is: An engine can pull two boxcars ONLY when the product of the two boxcar numbers equals the engine number. For example, engine 12 can pull boxcars with numbers 1 and 12 because 1 × 12 = 12.
 
