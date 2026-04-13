@@ -21,9 +21,12 @@ async function fetchAllRecords(modelName: ModelName):
       Promise<Record<string,
                      string | number | boolean | Date | object | null>[]> {
     switch (modelName) {
+        case 'Category':
+             return prismaInstance.category.findMany();
+
         case 'User':
              return prismaInstance.user.findMany();
-        
+
         case 'Persona':
              return prismaInstance.persona.findMany();
         
@@ -322,6 +325,19 @@ async function importSingleRow(modelName: ModelName,
                                row      : Record<string, string | null>):
       Promise<void> {
     switch (modelName) {
+        case 'Category': {
+            const schema = z.object({
+                name: z.string(),
+            });
+            const data = schema.parse(row);
+            await prismaInstance.category.upsert({
+                where : { name: data.name },
+                update: {},
+                create: data,
+            });
+            break;
+        }
+
         case 'User': {
             const schema = z.object({
                 id                       : z.coerce.number(),
@@ -354,6 +370,8 @@ async function importSingleRow(modelName: ModelName,
                 description   : z.string(),
                 initialMessage: z.string(),
                 instructions  : z.string().nullable().optional(),
+                skills        : z.string().nullable().optional(),
+                categoryName  : z.string(),
             });
             const data = schema.parse(row);
             const { id, ...personaData } = data;
@@ -364,7 +382,7 @@ async function importSingleRow(modelName: ModelName,
             });
             break;
         }
-        
+
         case 'Settings': {
             const schema = z.object({
                 id                 : z.coerce.number(),
@@ -421,7 +439,7 @@ async function importSingleRow(modelName: ModelName,
                 id              : z.coerce.number(),
                 problemId       : z.string(),
                 title           : z.string(),
-                category        : z.string().optional().default('math'),
+                categoryName    : z.string().optional().default('math'),
                 text            : z.string().nullable().optional(),
                 imageURL        : z.string().nullable().optional(),
                 imageDescription: z.string().nullable().optional(),

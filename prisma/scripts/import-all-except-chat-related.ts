@@ -8,6 +8,7 @@
 import { execSync } from 'child_process';
 
 const commandsExceptChatRelated = [
+    'npx ts-node prisma/scripts/import-from-csv.ts Category ./prisma/exports/export-Category.csv',
     'npx ts-node prisma/scripts/import-from-csv.ts User ./prisma/exports/export-User.csv',
     'npx ts-node prisma/scripts/import-from-csv.ts Persona ./prisma/exports/export-Persona.csv',
     'npx ts-node prisma/scripts/import-from-csv.ts Settings ./prisma/exports/export-Settings.csv',

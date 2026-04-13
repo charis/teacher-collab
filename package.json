@@ -14,6 +14,7 @@
     "export-db": "ts-node prisma/scripts/export-to-csv.ts",
     "import-db": "npx ts-node --project tsconfig.scripts.json prisma/scripts/import-all.ts",
     "import-db-except-chat-related": "npx ts-node --project tsconfig.scripts.json prisma/scripts/import-all-except-chat-related.ts",
+    "import-db:categories": "npx ts-node prisma/scripts/import-from-csv.ts Category ./prisma/exports/export-Category.csv",
     "import-db:users": "npx ts-node prisma/scripts/import-from-csv.ts User ./prisma/exports/export-User.csv",
     "import-db:personas": "npx ts-node prisma/scripts/import-from-csv.ts Persona ./prisma/exports/export-Persona.csv",
     "import-db:settings": "npx ts-node prisma/scripts/import-from-csv.ts Settings ./prisma/exports/export-Settings.csv",

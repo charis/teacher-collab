@@ -341,7 +341,9 @@ export function MainWindow({ username,
             gender        : embeddedPersona.gender,
             description   : embeddedPersona.description,
             initialMessage: embeddedPersona.initialMessage,
-            instructions  : embeddedPersona.instructions
+            instructions  : embeddedPersona.instructions,
+            skills        : embeddedPersona.skills,
+            category      : embeddedPersona.category
         }));
         
         SpeechUtil.getInstance().initSpeech(personas, TTS_SERVICE_PROVIDER);

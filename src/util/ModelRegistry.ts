@@ -10,6 +10,7 @@
 
 /** All Prisma model names in the schema, sorted alphabetically. */
 export const MODEL_NAMES = [
+    'Category',
     'Chat',
     'ChatTemplate',
     'ChatTemplateProblem',
@@ -28,6 +29,7 @@ export type ModelName = typeof MODEL_NAMES[number];
 
 /** FK-safe import order (matches prisma/scripts/import-all.ts) */
 export const IMPORT_ORDER: ModelName[] = [
+    'Category',
     'User',
     'Persona',
     'Settings',
@@ -105,6 +107,16 @@ export type ModelMeta = {
  * fields, display name, and Postgres sequence column.
  */
 export const MODEL_META: Record<ModelName, ModelMeta> = {
+    Category: {
+        name          : 'Category',
+        displayName   : 'Categories',
+        primaryKey    : 'name',
+        sequenceColumn: null,
+        fields: [
+            { name: 'name', type: 'string' },
+        ],
+    },
+
     User: {
         name          : 'User',
         displayName   : 'Users',
@@ -139,6 +151,8 @@ export const MODEL_META: Record<ModelName, ModelMeta> = {
             { name: 'description',    type: 'string'                  },
             { name: 'initialMessage', type: 'string'                  },
             { name: 'instructions',   type: 'string',  nullable: true },
+            { name: 'skills',         type: 'string',  nullable: true },
+            { name: 'categoryName',   type: 'string'                  },
         ],
     },
     
@@ -153,7 +167,7 @@ export const MODEL_META: Record<ModelName, ModelMeta> = {
             { name: 'id',               type: 'number',  readOnly: true },
             { name: 'problemId',        type: 'string'                  },
             { name: 'title',            type: 'string'                  },
-            { name: 'category',         type: 'string'                  },
+            { name: 'categoryName',     type: 'string'                  },
             { name: 'text',             type: 'string',  nullable: true },
             { name: 'imageURL',         type: 'string',  nullable: true },
             { name: 'imageDescription', type: 'string',  nullable: true },
