@@ -31,6 +31,7 @@ interface ChatWindowProps {
                            transcriptOrAgentId: number | string,
                            text               : string | null) => void;
     currEmbeddedPersonas: CachedDBPersona[];
+    allEmbeddedPersonas : CachedDBPersona[];
 };
 
 export function ChatWindow({ username,
@@ -44,7 +45,8 @@ export function ChatWindow({ username,
                              updateMessages,
                              saveMessage,
                              setResponseMessage,
-                             currEmbeddedPersonas }: ChatWindowProps) {
+                             currEmbeddedPersonas,
+                             allEmbeddedPersonas }: ChatWindowProps) {
     const messageEndRef = useRef<HTMLDivElement>(null);
     
     // ----------------------   u s e E f f e c t ( )   --------------------- //
@@ -72,6 +74,7 @@ export function ChatWindow({ username,
                                 saveMessage          = {saveMessage}
                                 setResponseMessage   = {setResponseMessage}
                                 currEmbeddedPersonas = {currEmbeddedPersonas}
+                                allEmbeddedPersonas  = {allEmbeddedPersonas}
                   />
                   <div ref={messageEndRef} />
                 </div>

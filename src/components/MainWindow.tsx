@@ -109,11 +109,12 @@ export function MainWindow({ username,
     // ----------------------------   M E M O   ----------------------------- //
     const iconMap = useMemo(() => {
         const map: Record<string, AvatarComponent> = {};
-        
+
         let femaleIndex = 0;
         let maleIndex = 0;
-        
-        for (const persona of currEmbeddedPersonas) {
+
+        // Build from all embedded personas so meet-the-agents icons are always available
+        for (const persona of embeddedPersonas) {
             if (persona.gender === Gender.FEMALE) {
                 map[persona.personaId] = FemaleAvatars[femaleIndex % FemaleAvatars.length];
                 femaleIndex++;
@@ -123,9 +124,9 @@ export function MainWindow({ username,
                 maleIndex++;
             }
         }
-        
+
         return map;
-    }, [currEmbeddedPersonas]);
+    }, [embeddedPersonas]);
         
     const interactionCount = messages.filter(msg => msg.role === Role.USER).length;
     
@@ -188,26 +189,17 @@ export function MainWindow({ username,
     
     // Build the currEmbeddedPersonas from the fetched activeProblem + full embedded pool
     useEffect(() => {
-        // If problem not loaded yet, clear currEmbeddedPersonas
         const dbPersonas = activeProblem?.personas ?? [];
         if (dbPersonas.length === 0) {
-            //setCurrEmbeddedPersonas([]);
+            setCurrEmbeddedPersonas([]);
             return;
         }
-        
-        setCurrEmbeddedPersonas(prev => {
-            // Combine previous personas with the new ones from activeProblem
-            const combined = [...prev, ...embeddedPersonas.filter(ep =>
-                dbPersonas.some(p => p.personaId === ep.personaId)
-            )];
-            
-            // Deduplicate by personaId using a Map
-            const uniqueById = Array.from(
-                new Map(combined.map(p => [p.personaId, p])).values()
-            );
-            
-            return uniqueById;
-        });
+
+        // Only include personas that belong to the current problem
+        const filtered = embeddedPersonas.filter(ep =>
+            dbPersonas.some(p => p.personaId === ep.personaId)
+        );
+        setCurrEmbeddedPersonas(filtered);
     }, [activeProblem, embeddedPersonas]);
     
     // Reset current transcript index when active problem changes
@@ -452,6 +444,7 @@ export function MainWindow({ username,
                   >
                     <span>Transcripts</span>
                   </Tab>
+                  {activeProblem?.category === "cs" && (
                   <Tab className="inline-flex rounded-t-[10px] px-5 py-3 text-xs font-medium
                                   cursor-pointer bg-white text-cardinal-red border
                                   border-cardinal-red hover:bg-red-50 transition-all
@@ -461,6 +454,7 @@ export function MainWindow({ username,
                   >
                     <span>Whiteboard</span>
                   </Tab>
+                  )}
                 </TabList>
               </div>
               
@@ -570,7 +564,8 @@ export function MainWindow({ username,
                   </ScrollArea>
                 </TabPanel>
 
-                {/* Whiteboard panel */}
+                {/* Whiteboard panel (CS only) */}
+                {activeProblem?.category === "cs" && (
                 <TabPanel className="flex flex-col min-h-0 flex-1">
                   <div className={isWhiteboardFullscreen
                     ? "fixed inset-0 z-50 bg-white"
@@ -611,6 +606,7 @@ export function MainWindow({ username,
                     )}
                   </div>
                 </TabPanel>
+                )}
               </div>
             </Tabs>
           )}
@@ -692,6 +688,7 @@ export function MainWindow({ username,
                           saveMessage          = {addMessage}
                           setResponseMessage   = {setResponseMessage}
                           currEmbeddedPersonas = {currEmbeddedPersonas}
+                          allEmbeddedPersonas  = {embeddedPersonas}
               />
               
               {/* Input form fixed at bottom */}
