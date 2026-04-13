@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'No personas provided' }, { status: 400 });
         }
         
-        const inputs = personas.map(persona => persona.initialMessage);
+        const inputs = personas.map(persona => persona.skills ?? persona.description);
         
         const embeddingRes = await openai.embeddings.create({
             model: 'text-embedding-3-small',

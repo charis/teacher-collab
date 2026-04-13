@@ -42,7 +42,8 @@ interface ChatMessagesProps extends HTMLAttributes<HTMLDivElement> {
     setResponseMessage  : (message            : ChatMessage,
                            transcriptOrAgentId: number | string,
                            text               : string | null) => void;
-    currEmbeddedPersonas: CachedDBPersona[]; 
+    currEmbeddedPersonas: CachedDBPersona[];
+    allEmbeddedPersonas : CachedDBPersona[];
 };
 
 export function ChatMessages({ className,
@@ -58,6 +59,7 @@ export function ChatMessages({ className,
                                saveMessage,
                                setResponseMessage,
                                currEmbeddedPersonas,
+                               allEmbeddedPersonas,
                                ...props }: ChatMessagesProps) {
     // -----------------------   C O N S T A N T S   ------------------------ //
     // Pixel threshold to decide if the user is "close enough" to the bottom
@@ -92,9 +94,9 @@ export function ChatMessages({ className,
         let femaleIndex = 0;
         let maleIndex   = 0;
         
-        for (const persona of currEmbeddedPersonas) {
+        for (const persona of allEmbeddedPersonas) {
             personaMap[persona.personaId] = persona;
-            
+
             if (persona.gender === Gender.FEMALE) {
                 avatarMap[persona.personaId] = FemaleAvatars[femaleIndex % FemaleAvatars.length];
                 femaleIndex++;
@@ -104,16 +106,16 @@ export function ChatMessages({ className,
                 maleIndex++;
             }
         }
-        
+
         // Check if there is any message with the role of a user.
         const hasUserMessage = messages.some(message => message.role === Role.USER);
-        
+
         return {
             avatarMap,
             personaMap,
             introMessagesOnly: !hasUserMessage
         };
-    }, [currEmbeddedPersonas, messages]);
+    }, [allEmbeddedPersonas, messages]);
     
     // ------------------------- Scrolling Utilities ------------------------ //
     /**

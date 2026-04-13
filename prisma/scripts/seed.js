@@ -73,8 +73,8 @@ async function main() {
             // ---- CS Personas ---- //
             {
                 personaId     : "problem_decomposition_and_lesson_design",
-                name          : "Alex CS",
-                gender        : "male",
+                name          : "Taylor",
+                gender        : "female",
                 categoryName  : "cs",
                 description   : "I am a CS education specialist focused on how teachers structure and scaffold problems. I evaluate whether lessons are broken down into logical, digestible steps, whether visual aids and pseudocode are used effectively, and whether examples are well-chosen. I care about pacing, flow, and building understanding before jumping into code.",
                 initialMessage: "Let's say you're about to teach this problem to a group of CS106B students who just learned recursion. Before we look at any code, how would you break this problem down for them? What's your plan for structuring the lesson?",
