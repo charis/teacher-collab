@@ -134,8 +134,8 @@ $ .quit
     $ npx prisma migrate reset
 
 3) Create a new migration:
-    $ npx prisma migrate dev --name init
-
+    $ 
+npx prisma migrate dev --name init
 4) Import the seed.js to the DB:
     $ npx prisma db seed
 

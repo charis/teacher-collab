@@ -60,7 +60,53 @@ export default function HomeClient() {
         
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [hasMounted, status]);
-    
+
+    /**
+     * When the user switches category in the dropdown, find or create a chat
+     * for that category and switch to it.
+     */
+    useEffect(() => {
+        if (!selectedCategory || !authenticated || !session?.user?.email) {
+            return;
+        }
+
+        // Check if the current active chat already belongs to this category
+        const activeChat = chatRecord[activeChatId];
+        if (activeChat && getChatCategory(activeChat) === selectedCategory) {
+            return; // Already on the right chat
+        }
+
+        // Look for an existing non-completed chat in chatRecord for this category
+        const existingChat = Object.values(chatRecord).find(
+            chat => !chat.completed && getChatCategory(chat) === selectedCategory
+        );
+
+        if (existingChat) {
+            // Switch to the existing chat
+            setActiveChatId(existingChat.id);
+            const firstSeq = existingChat.learningSequences?.[0];
+            if (firstSeq?.transcript) {
+                setActiveProblemId(firstSeq.transcript.problem?.problemId ?? null);
+                setActiveTranscriptId(firstSeq.transcript.id);
+            }
+        }
+        else {
+            // Create a new chat for this category
+            const userEmail = session.user.email!;
+            newChat(userEmail, selectedCategory).then(chat => {
+                if (chat) {
+                    setActiveChatId(chat.id);
+                    const firstSeq = chat.learningSequences?.[0];
+                    if (firstSeq?.transcript) {
+                        setActiveProblemId(firstSeq.transcript.problem?.problemId ?? null);
+                        setActiveTranscriptId(firstSeq.transcript.id);
+                    }
+                }
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedCategory]);
+
     // Initializes the chat interface by loading the chats, setting the active chat
     async function init() {
         if (!authenticated || session.user === undefined) {
@@ -80,7 +126,13 @@ export default function HomeClient() {
         // initial problem/transcript
         if (activeChat) {
             setActiveChatId(activeChat.id);
-            
+
+            // Set initial category from the active chat
+            const chatCat = getChatCategory(activeChat);
+            if (chatCat) {
+                setSelectedCategory(chatCat);
+            }
+
             // If learning sequences exist, set the problem and transcript from
             // the first sequence
             const firstSequence = activeChat.learningSequences?.[0];
@@ -135,6 +187,15 @@ export default function HomeClient() {
         }
     }
 
+    /**
+     * Returns the category of a chat by looking at its first learning sequence's
+     * problem category. Returns null if no learning sequences exist.
+     */
+    function getChatCategory(chat: DBChat): string | null {
+        const firstSeq = chat.learningSequences?.[0];
+        return firstSeq?.transcript?.problem?.category ?? null;
+    }
+
     // Loads the chats from the database and sets the active chat
     async function loadChats(userEmail: string): Promise<DBChat | null> {
         const dbChats = await getChats(userEmail, false);
@@ -144,6 +205,7 @@ export default function HomeClient() {
         }
         
         if (dbChats.length == 0) {
+            console.log("dbChats.length is 0");
             setActiveChatId(NO_CHAT_ID_LEFT);
             return null;
         }
@@ -156,16 +218,18 @@ export default function HomeClient() {
         }
         setChatRecord(loadedChatRecord);
         setActiveChatId(activeChatId);
+        console.log("Chats loaded");
         
         return dbChats[dbChats.length - 1]; // Return active chat (i.e.,  most recent chat)
     };
     
     // Looks up the next chat template and creates a new chat from it
-    async function newChat(userEmail: string): Promise<DBChat | null> {
-        const chatTemplate = await getChatTemplate(userEmail);
+    async function newChat(userEmail: string,
+                           category?: string): Promise<DBChat | null> {
+        const chatTemplate = await getChatTemplate(userEmail, category);
         if (!chatTemplate) {
-            console.log("No unused chat template found");
-            setActiveChatId(NO_ACTIVE_CHAT_ID);
+            console.log(`No unused chat template found${category ? ` for category '${category}'` : ''}`);
+            if (!category) setActiveChatId(NO_ACTIVE_CHAT_ID);
             return null;
         }
         
@@ -180,7 +244,8 @@ export default function HomeClient() {
             ...prev,
             [dbChat.id]: dbChat
         }));
-        
+        console.log("New chat created");
+
         return dbChat;
     }
     
@@ -198,6 +263,7 @@ export default function HomeClient() {
         const nextIndex = (currIndex + 1) % problems.length;
         const nextProblemId = problems[nextIndex].problemId;
         setActiveProblemId(nextProblemId);
+        console.log("Next problem selected");
     }
     
     // Selects the next chat

@@ -510,8 +510,9 @@ async function importSingleRow(modelName: ModelName,
         
         case 'ChatTemplate': {
             const schema = z.object({
-                id  : z.coerce.number(),
-                name: z.string(),
+                id          : z.coerce.number(),
+                name        : z.string(),
+                categoryName: z.string().nullable().optional(),
             });
             const data = schema.parse(row);
             const { id, ...rest } = data;
