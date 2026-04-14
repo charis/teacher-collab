@@ -1222,6 +1222,7 @@ export async function updatePersonaFields(updates: {
                                               description?  : string;
                                               initialMessage?: string;
                                               instructions? : string | null;
+                                              skills?       : string | null;
                                           }[]): Promise<number> {
     if (!updates || updates.length === 0) {
         return 0;
@@ -1247,6 +1248,7 @@ export async function updatePersonaFields(updates: {
                 if (update.description    !== undefined) data.description    = update.description;
                 if (update.initialMessage !== undefined) data.initialMessage = update.initialMessage;
                 if (update.instructions   !== undefined) data.instructions   = update.instructions;
+                if (update.skills         !== undefined) data.skills         = update.skills;
 
                 if (Object.keys(data).length > 0) {
                     await txn.persona.update({

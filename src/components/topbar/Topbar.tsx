@@ -17,10 +17,7 @@ type TopbarProps = {
     toggleSidebar       : () => void;
     settings            : Settings | null;
     setSettings         : React.Dispatch<React.SetStateAction<Settings | null>>;
-    currProblemCompleted: boolean;
-    allProblemsCompleted: boolean;
-    nextProblem         : () => void;
-    endSession          : () => Promise<void>;
+    selectedCategory    : string | null;
 };
 
 /**
@@ -34,10 +31,7 @@ const Topbar:React.FC<TopbarProps> = ({ user,
                                         toggleSidebar,
                                         settings,
                                         setSettings,
-                                        currProblemCompleted,
-                                        allProblemsCompleted,
-                                        nextProblem,
-                                        endSession }) => {
+                                        selectedCategory }) => {
     // ---------------------------   S T A T E   ---------------------------- //
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [dbModalOpen,  setDbModalOpen]  = useState(false);
@@ -85,23 +79,6 @@ const Topbar:React.FC<TopbarProps> = ({ user,
               </div>
             </div>
           }
-          {allProblemsCompleted &&
-            <div className="flex items-center space-x-4 flex-1 justify-end">
-              <button onClick   = { endSession }
-                      className = "mr-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow">
-                End Session
-              </button>
-            </div>
-          }
-          {!allProblemsCompleted && currProblemCompleted &&
-            <div className="flex items-center space-x-4 flex-1 justify-end">
-              <button onClick   = { nextProblem }
-                      className = "mr-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow">
-                Next
-              </button>
-            </div>
-          }
-          
           <div className="flex items-center space-x-4 flex-1 justify-end">
             {
               !user && ( // The user is not logged in
@@ -216,10 +193,11 @@ const Topbar:React.FC<TopbarProps> = ({ user,
         
         {settings && user?.isAdmin && (
           <>
-            <SettingsModal isOpen     ={settingsOpen}
-                           onClose    ={() => setSettingsOpen(false)}
-                           settings   ={settings!}
-                           setSettings={setSettings}
+            <SettingsModal isOpen           ={settingsOpen}
+                           onClose          ={() => setSettingsOpen(false)}
+                           settings         ={settings!}
+                           setSettings      ={setSettings}
+                           selectedCategory ={selectedCategory}
             />
             <DatabaseModal isOpen ={dbModalOpen}
                            onClose={() => setDbModalOpen(false)}

@@ -1,7 +1,7 @@
 "use client";
 
 // Library imports
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PQueue  from 'p-queue';
 import Image from 'next/image';
 // Custom imports
@@ -11,7 +11,6 @@ import { generateId } from "@/util/ChatUtil";
 import { createMessage,
          deleteMessage,
          updateMessage } from "@/util/DBUtil";
-import { isFixedAgentMode } from "@/util/SettingsUtil";
 import { ChatMessage,
          DBChat,
          DBLearningSequence,
@@ -19,7 +18,7 @@ import { ChatMessage,
          DBPersona,
          Role,
          Settings } from "@/types";
-import { MIN_INTERACTIONS, NO_ACTIVE_CHAT_ID } from "@/constants";
+import { NO_ACTIVE_CHAT_ID } from "@/constants";
 
 interface ChatInterfaceProps {
     username               : string | null;
@@ -33,11 +32,12 @@ interface ChatInterfaceProps {
     setActiveProblemId     : React.Dispatch<React.SetStateAction<string | null>>;
     activeTranscriptId     : number | null;
     setActiveTranscriptId  : React.Dispatch<React.SetStateAction<number | null>>;
-    setCurrProblemCompleted: React.Dispatch<React.SetStateAction<boolean>>;
-    setAllProblemsCompleted: React.Dispatch<React.SetStateAction<boolean>>;
     categories             : string[];
     selectedCategory       : string | null;
     setSelectedCategory    : React.Dispatch<React.SetStateAction<string | null>>;
+    onNextProblem          : () => void;
+    onPrevProblem          : () => void;
+    onAllCompleted         : () => void;
 }
         
 export function ChatInterface({ username,
@@ -51,11 +51,12 @@ export function ChatInterface({ username,
                                 setActiveProblemId,
                                 activeTranscriptId,
                                 setActiveTranscriptId,
-                                setCurrProblemCompleted,
-                                setAllProblemsCompleted,
                                 categories,
                                 selectedCategory,
-                                setSelectedCategory }: ChatInterfaceProps) {
+                                setSelectedCategory,
+                                onNextProblem,
+                                onPrevProblem,
+                                onAllCompleted }: ChatInterfaceProps) {
     // ---------------------------   S T A T E   ---------------------------- //
     // activeChatMessages => key: transcriptId / value: ChatMessage[]
     const [activeChatMessages,    setActiveChatMessages]    = useState<Record<number, ChatMessage[]>>({});
@@ -72,11 +73,6 @@ export function ChatInterface({ username,
         return chatRecord[activeChatId]?.learningSequences ?? [];
     }, [chatRecord, activeChatId]);
     
-    // Memoize current learning sequence
-    const currLearningSequence = useMemo(() => {
-        return learningSequences.find(seq => seq.transcript.id === activeTranscriptId);
-    }, [learningSequences, activeTranscriptId]);
-
     /**
      * Determines whether a learning sequence has reached the required number of
      * user interactions and should be considered "complete".
@@ -92,25 +88,6 @@ export function ChatInterface({ username,
      * @returns {@code true} if the sequence meets or exceeds the required number
      *          of user messages or {@code false} otherwise
      */
-    const isLearningSequenceComplete = useCallback((learningSequence: {
-        messages  : DBMessage[];
-        transcript: {
-            problem: {
-                personas: DBPersona[]
-            }
-        };
-    }): boolean => {
-        const userMessages = learningSequence.messages.filter(msg => msg.role === Role.USER);
-        const numOfPersonas = learningSequence.transcript.problem.personas.length;
-
-        let minInteractions = MIN_INTERACTIONS;
-        if (isFixedAgentMode(settings) && numOfPersonas > 1) {
-            minInteractions = (numOfPersonas + 1) * MIN_INTERACTIONS;
-        }
-
-        return userMessages.length >= minInteractions;
-    }, [settings]);
-
     // ----------------------   u s e E f f e c t ( )   --------------------- //
     useEffect(() => {
         const activeChat = chatRecord[activeChatId];
@@ -121,35 +98,6 @@ export function ChatInterface({ username,
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeChatId]);
     
-    // Checks if all learning sequences are complete and, if so, sets the
-    // learningSequencesCompleted state to true
-    useEffect(() => {
-        if (!learningSequences || learningSequences.length === 0) {
-            return;
-        }
-        
-        const allLearningSequencesAreComplete = learningSequences.every(isLearningSequenceComplete);
-
-        setAllProblemsCompleted(allLearningSequencesAreComplete);
-    }, [learningSequences, setAllProblemsCompleted, isLearningSequenceComplete]);
-    
-    // Checks if the user messages exceed the required number of messages to
-    // consider the learning sequence 'completed'
-    useEffect(() => {
-        if (!currLearningSequence) {
-            return;
-        }
-        
-        const currProblemId = currLearningSequence.transcript.problem.problemId;
-        
-        // Filter only learning sequences that belong to this same problem
-        const learningSequencesCurrProblem = learningSequences.filter(
-            seq => seq.transcript.problem.problemId === currProblemId
-        );
-        
-        const allLearningSequencesAreComplete  = learningSequencesCurrProblem.every(isLearningSequenceComplete);
-        setCurrProblemCompleted(allLearningSequencesAreComplete);
-    }, [currLearningSequence, learningSequences, setCurrProblemCompleted, isLearningSequenceComplete]);
 
     /**
      * Initializes the in-memory chat messages for both transcript-based and
@@ -717,6 +665,9 @@ export function ChatInterface({ username,
                         updateMessages        = {updateMessages}
                         addMessage            = {handleAddMessage}
                         setResponseMessage    = {setResponseMessage}
+                        onNextProblem         = {onNextProblem}
+                        onPrevProblem         = {onPrevProblem}
+                        onAllCompleted        = {onAllCompleted}
             />
             }
             {(activeChatId === NO_ACTIVE_CHAT_ID) &&

@@ -4,8 +4,15 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeExternalLinks from 'rehype-external-links';
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
-import prism from 'react-syntax-highlighter/dist/esm/styles/prism/prism';
+import basePrism from 'react-syntax-highlighter/dist/esm/styles/prism/prism';
 import 'prismjs/themes/prism.css';
+
+// Override prism background to transparent so the parent wrapper controls it
+const prism = {
+    ...basePrism,
+    'pre[class*="language-"]':  { ...basePrism['pre[class*="language-"]'],  background: 'transparent' },
+    'code[class*="language-"]': { ...basePrism['code[class*="language-"]'], background: 'transparent' },
+};
 // Custom imports
 import TextCopyButton from "@/components/TextCopyButton";
 
