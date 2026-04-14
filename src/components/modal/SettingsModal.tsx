@@ -9,16 +9,18 @@ import { updateSettings, getPersonas, updatePersonaFields } from "@/util/DBUtil"
 import { DBPersona, DBSettingsSwitch, Settings } from "@/types";
 
 type SettingsModalProps = {
-    isOpen     : boolean;
-    onClose    : () => void;
-    settings   : Settings;
-    setSettings: React.Dispatch<React.SetStateAction<Settings | null>>;
+    isOpen          : boolean;
+    onClose         : () => void;
+    settings        : Settings;
+    setSettings     : React.Dispatch<React.SetStateAction<Settings | null>>;
+    selectedCategory: string | null;
 };
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
                                                        onClose,
                                                        settings,
-                                                       setSettings }) => {
+                                                       setSettings,
+                                                       selectedCategory }) => {
     // ---------------------------   S T A T E   ---------------------------- //
     const [textValue, setTextValue] = useState(settings.global_instructions ?? "");
     
@@ -27,6 +29,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
     const [personaInstructions,   setPersonaInstructions]   = useState<Record<string, string>>({});
     const [personaDescriptions,   setPersonaDescriptions]   = useState<Record<string, string>>({});
     const [personaInitialMsgs,    setPersonaInitialMsgs]    = useState<Record<string, string>>({});
+    const [personaSkills,         setPersonaSkills]         = useState<Record<string, string>>({});
     const [isLoadingPersonas,     setIsLoadingPersonas]     = useState(false);
     const [activeTabIndex,        setActiveTabIndex]        = useState(0);
     
@@ -51,20 +54,27 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
             if (cancelledRef.current) {
                 return;
             }
-            
-            setPersonas(dbPersonas);
+
+            // Filter by selected category (show all if no category selected)
+            const filtered = selectedCategory
+                ? dbPersonas.filter(p => p.category === selectedCategory)
+                : dbPersonas;
+            setPersonas(filtered);
             
             const instructionsMap: Record<string, string> = {};
             const descriptionsMap: Record<string, string> = {};
             const initialMsgsMap: Record<string, string> = {};
+            const skillsMap:      Record<string, string> = {};
             for (const persona of dbPersonas) {
                 instructionsMap[persona.personaId] = persona.instructions ?? "";
                 descriptionsMap[persona.personaId] = persona.description ?? "";
                 initialMsgsMap[persona.personaId]  = persona.initialMessage ?? "";
+                skillsMap[persona.personaId]        = persona.skills ?? "";
             }
 
             setPersonaInstructions(instructionsMap);
             setPersonaDescriptions(descriptionsMap);
+            setPersonaSkills(skillsMap);
             setPersonaInitialMsgs(initialMsgsMap);
             setIsLoadingPersonas(false);
         }
@@ -90,7 +100,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
         loadPersonas();
         
         return () => { cancelledRef.current = true; };
-    }, [isOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, selectedCategory]);
     
     if (!isOpen) {
         return null;
@@ -129,7 +140,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
         const updates: { personaId: string;
                          description?: string;
                          initialMessage?: string;
-                         instructions?: string | null }[] = [];
+                         instructions?: string | null;
+                         skills?: string | null }[] = [];
         for (const persona of personas) {
             const changed: typeof updates[number] = { personaId: persona.personaId };
             let hasChanges = false;
@@ -149,6 +161,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
             const newInstructions = personaInstructions[persona.personaId] ?? "";
             if (newInstructions !== (persona.instructions ?? "")) {
                 changed.instructions = newInstructions.trim() || null;
+                hasChanges = true;
+            }
+
+            const newSkills = personaSkills[persona.personaId] ?? "";
+            if (newSkills !== (persona.skills ?? "")) {
+                changed.skills = newSkills.trim() || null;
                 hasChanges = true;
             }
 
@@ -383,6 +401,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
                         value   ={personaInstructions[persona.personaId] ?? ""}
                         onChange={(e) => {
                           setPersonaInstructions(prev => ({
+                            ...prev,
+                            [persona.personaId]: e.target.value
+                          }));
+                        }}
+                      />
+                    </div>
+
+                    {/* Skills (editable) */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        Skills
+                      </label>
+                      <textarea
+                        className="w-full px-3 py-2 text-black bg-white rounded border
+                                   border-gray-300 focus:outline-none focus:ring-2
+                                   focus:ring-blue-500"
+                        rows    ={4}
+                        value   ={personaSkills[persona.personaId] ?? ""}
+                        onChange={(e) => {
+                          setPersonaSkills(prev => ({
                             ...prev,
                             [persona.personaId]: e.target.value
                           }));

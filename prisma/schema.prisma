@@ -146,7 +146,7 @@ model LearningSequence {
     transcriptId              Int
     messages                  Message[]
     whiteboardData            Json?
-
+    
     @@id([chatId, transcriptId]) // Composite primary key
 }
 

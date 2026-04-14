@@ -24,8 +24,6 @@ export default function HomeClient() {
     const [activeChatId,         setActiveChatId]         = useState<number>(NO_ACTIVE_CHAT_ID);
     const [activeProblemId,      setActiveProblemId]      = useState<string | null>(null);
     const [activeTranscriptId,   setActiveTranscriptId]   = useState<number | null>(null);
-    const [currProblemCompleted, setCurrProblemCompleted] = useState(false);
-    const [allProblemsCompleted, setAllProblemsCompleted] = useState(false);
     const [sidebarOpen,          setSidebarOpen]          = useState(true);
     const [categories,           setCategories]           = useState<string[]>([]);
     const [selectedCategory,     setSelectedCategory]     = useState<string | null>(null);
@@ -265,7 +263,22 @@ export default function HomeClient() {
         setActiveProblemId(nextProblemId);
         console.log("Next problem selected");
     }
-    
+
+    // Selects the previous problem
+    const prevProblem = () => {
+        if (problems.length === 0) {
+            return;
+        }
+
+        const currIndex = problems.findIndex(problem => problem.problemId === activeProblemId);
+        if (currIndex <= 0) {
+            return; // Already on first problem
+        }
+        const prevProblemId = problems[currIndex - 1].problemId;
+        setActiveProblemId(prevProblemId);
+        console.log("Previous problem selected");
+    }
+
     // Selects the next chat
     const endSession = async() => {
         const [updatedDBChat, error] = await updateChat(activeChatId, true);
@@ -335,10 +348,7 @@ export default function HomeClient() {
                 toggleSidebar        = {toggleSidebar}
                 settings             = {settings}
                 setSettings          = {setSettings}
-                currProblemCompleted = {currProblemCompleted}
-                allProblemsCompleted = {allProblemsCompleted}
-                nextProblem          = {nextProblem}
-                endSession           = {endSession}
+                selectedCategory     = {selectedCategory}
         />
         {authenticated ? (
           <div className="flex flex-col flex-grow bg-gray-100">
@@ -353,11 +363,12 @@ export default function HomeClient() {
                            setActiveProblemId      = {setActiveProblemId}
                            activeTranscriptId      = {activeTranscriptId}
                            setActiveTranscriptId   = {setActiveTranscriptId}
-                           setCurrProblemCompleted = {setCurrProblemCompleted}
-                           setAllProblemsCompleted = {setAllProblemsCompleted}
                            categories              = {categories}
                            selectedCategory        = {selectedCategory}
                            setSelectedCategory     = {setSelectedCategory}
+                           onNextProblem           = {nextProblem}
+                           onPrevProblem           = {prevProblem}
+                           onAllCompleted          = {endSession}
             />
           </div>
         ) : (

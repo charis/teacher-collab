@@ -8,24 +8,18 @@ import "@/styles/react-tabs.css";
 import dynamic from 'next/dynamic';
 // Custom imports
 import QueryProvider from "@/components/QueryProvider";
+import MarkdownBlock from "@/components/chatbot/MarkdownBlock";
 import ResponsiveImage from "@/components/ResponsiveImage";
 import { ChatInput } from "@/components/chatbot/ChatInput";
 import { ChatWindow } from "@/components/chatbot/ChatWindow";
-import { Button, buttonVariants } from "@/components/teacher/ui/button";
+import { Button } from "@/components/teacher/ui/button";
 import { Card } from "@/components/teacher/ui/card";
 import { ScrollArea } from "@/components/teacher/ui/scroll-area";
 import { getPersonas, getProblem } from "@/util/DBUtil";
 import { getPersonaEmbeddings } from "@/util/PersonaUtil";
-import { cn } from "@/util/utils";
 import { isFixedAgentMode } from "@/util/SettingsUtil"; 
 import { SpeechUtil } from "@/util/SpeechUtil";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle
-} from "@/components/teacher/ui/dialog";
+import CompletionModal from "@/components/modal/CompletionModal";
 import { CachedDBPersona,
          ChatMessage,
          DBLearningSequence,
@@ -61,6 +55,9 @@ interface MainWindowProps {
     setResponseMessage   : (message            : ChatMessage,
                             transcriptOrAgentId: number | string,
                             text               : string | null) => void;
+    onNextProblem        : () => void;
+    onPrevProblem        : () => void;
+    onAllCompleted       : () => void;
 }
 
 export function MainWindow({ username,
@@ -75,14 +72,17 @@ export function MainWindow({ username,
                              setMessages,
                              updateMessages,
                              addMessage,
-                             setResponseMessage }: MainWindowProps) {
+                             setResponseMessage,
+                             onNextProblem,
+                             onPrevProblem,
+                             onAllCompleted }: MainWindowProps) {
     // ---------------------------   S T A T E   ---------------------------- //
     const [leftTabIndex,           setLeftTabIndex]           = useState<number>(0);
     // State to store pre-computed embeddings
     const [embeddedPersonas,       setEmbeddedPersonas]       = useState<CachedDBPersona[]>([]);
     // Store the current embedded personas for the current transcript
     const [currEmbeddedPersonas,   setCurrEmbeddedPersonas]   = useState<CachedDBPersona[]>([]);
-    const [canProgress,            setCanProgress]            = useState(false);
+    const [canProgressOverride,    setCanProgressOverride]    = useState<boolean | null>(null);
     const [isWhiteboardFullscreen, setIsWhiteboardFullscreen] = useState(false);
 
     // Exit whiteboard fullscreen on Escape
@@ -129,7 +129,10 @@ export function MainWindow({ username,
     }, [embeddedPersonas]);
         
     const interactionCount = messages.filter(msg => msg.role === Role.USER).length;
-    
+    const canProgress = canProgressOverride !== null
+        ? canProgressOverride
+        : interactionCount >= minInteractions && minInteractions > 0;
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const transcriptRef  = useRef<HTMLDivElement>(null);
     
@@ -150,6 +153,9 @@ export function MainWindow({ username,
     
     // Fetch DBProblem by id
     useEffect(() => {
+        // Reset progress override when problem changes so computed value takes over
+        setCanProgressOverride(null);
+
         if (activeProblemId == null) {
             setActiveProblem(null);
             setIsLoadingProblem(false);
@@ -206,6 +212,11 @@ export function MainWindow({ username,
     useEffect(() => {
         setCurrTranscriptIndex(0);
     }, [activeProblemId]);
+
+    // Reset progress override when transcript changes so the computed value takes over
+    useEffect(() => {
+        setCanProgressOverride(null);
+    }, [currTranscriptIndex]);
     
     // Ensure index is within bounds if problem changes
     useEffect(() => {
@@ -342,38 +353,87 @@ export function MainWindow({ username,
     }, [currEmbeddedPersonas]);
     
     // Add a ref to track if we're actually ending the session
-    const isEndingSession = useRef(false);
    
-    // Modify handleProgressSequence to log sequence completion
+    /**
+     * Advances the learning flow:
+     *   1. If more transcripts remain for this problem → next transcript
+     *   2. If last transcript but more problems remain → next problem (first transcript)
+     *   3. If last transcript of last problem → show completion modal
+     */
     const handleProgressSequence = () => {
         if (!canProgress) {
             return;
         }
-        
+
         // Prevent double-triggers while we transition
-        setCanProgress(false);
-        
-        const maxIndex = (activeProblem?.transcripts?.length ?? numOfTranscripts) - 1;
-        if (currTranscriptIndex >= maxIndex) {
-            // Last transcript -> show completion modal
-            setShowCompletionModal(true);
-            isEndingSession.current = true;
+        setCanProgressOverride(false);
+
+        const maxTranscriptIndex = (activeProblem?.transcripts?.length ?? numOfTranscripts) - 1;
+        if (currTranscriptIndex < maxTranscriptIndex) {
+            // More transcripts for this problem → next transcript
+            setCurrTranscriptIndex(i => Math.min(maxTranscriptIndex, i + 1));
+            setHighlightedText(null);
         }
         else {
-            // Move to next transcript
-            setCurrTranscriptIndex(i => Math.min(maxIndex, i + 1));
-            setHighlightedText(null);
+            // Last transcript of this problem — check if there are more problems
+            const problemIds = [...new Set(
+                learningSequences.map(ls => ls.transcript.problem.problemId)
+            )];
+            const currProblemIdx = problemIds.indexOf(activeProblemId ?? '');
+            if (currProblemIdx < problemIds.length - 1) {
+                // More problems → advance to next problem
+                setCurrTranscriptIndex(0);
+                setHighlightedText(null);
+                onNextProblem();
+            }
+            else {
+                // All problems and transcripts exhausted → show completion modal
+                // (chat is not marked complete until user clicks Submit or Skip)
+                setShowCompletionModal(true);
+            }
         }
     }
     
-    // Handles restart
-    const handleRestart = () => {
-        setCanProgress(false);
-        setShowCompletionModal(false);
-        isEndingSession.current = false;
-        setCurrTranscriptIndex(0);
+    /**
+     * Goes back in the learning flow:
+     *   1. If not on the first transcript → previous transcript
+     *   2. If on the first transcript but previous problems exist → previous problem (last transcript)
+     *   3. If on the first transcript of the first problem → no-op
+     */
+    const handlePreviousSequence = () => {
+        if (currTranscriptIndex > 0) {
+            // Previous transcript within this problem
+            setCurrTranscriptIndex(i => i - 1);
+            setHighlightedText(null);
+            setCanProgressOverride(null);
+        }
+        else {
+            // First transcript — check for previous problem
+            const problemIds = [...new Set(
+                learningSequences.map(ls => ls.transcript.problem.problemId)
+            )];
+            const currProblemIdx = problemIds.indexOf(activeProblemId ?? '');
+            if (currProblemIdx > 0) {
+                // Go to previous problem's last transcript
+                onPrevProblem();
+                // Set to last transcript of previous problem after it loads
+                // We use a large number — the useEffect clamping will bring it to max
+                setCurrTranscriptIndex(999);
+                setHighlightedText(null);
+                setCanProgressOverride(null);
+            }
+        }
     };
-    
+
+    /** Whether the "Previous" button should be shown. */
+    const canGoBack = (() => {
+        if (currTranscriptIndex > 0) return true;
+        const problemIds = [...new Set(
+            learningSequences.map(ls => ls.transcript.problem.problemId)
+        )];
+        return problemIds.indexOf(activeProblemId ?? '') > 0;
+    })();
+
     // Navigation controls for transcripts
     const numOfTranscripts = activeProblem?.transcripts?.length ?? 0;
     const goPrevTranscript = () => {
@@ -470,10 +530,14 @@ export function MainWindow({ username,
                                       whitespace-pre-wrap break-words">
                         {activeProblem?.title ?? ""}
                       </pre>
-                      <pre className="text-sm text-muted-foreground font-sans
-                                      whitespace-pre-wrap break-words">
-                        {activeProblem?.text ?? ""}
-                      </pre>
+                      <div className="text-sm text-muted-foreground prose prose-sm max-w-none
+                                      [&_.code-block]:bg-[#1e1e2e] [&_.code-block]:rounded-lg
+                                      [&_.code-block]:border [&_.code-block]:border-slate-700
+                                      [&_code]:bg-slate-800 [&_code]:text-slate-200
+                                      [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5
+                                      [&_code]:text-sm">
+                        <MarkdownBlock content={activeProblem?.text ?? ""} />
+                      </div>
                       {activeProblem?.imageURL && (
                         <div className="flex flex-col items-center gap-4">
                           <div className="relative w-full aspect-square">
@@ -523,10 +587,14 @@ export function MainWindow({ username,
                     <div className="whitespace-pre-line">
                       {currentTranscriptImageURL !== null ? (
                          <div className="flex flex-col items-stretch gap-4">
-                          <pre className="text-sm text-muted-foreground font-sans
-                                          whitespace-pre-wrap break-words">
-                            {activeProblem?.transcripts?.[currTranscriptIndex]?.text ?? ""}
-                          </pre>
+                          <div className="text-sm text-muted-foreground prose prose-sm max-w-none
+                                          [&_.code-block]:bg-[#1e1e2e] [&_.code-block]:rounded-lg
+                                          [&_.code-block]:border [&_.code-block]:border-slate-700
+                                          [&_code]:bg-slate-800 [&_code]:text-slate-200
+                                          [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5
+                                          [&_code]:text-sm">
+                            <MarkdownBlock content={activeProblem?.transcripts?.[currTranscriptIndex]?.text ?? ""} />
+                          </div>
                           
                           <div className="flex flex-col items-center gap-4">
                             <div className="relative w-full aspect-square">
@@ -541,24 +609,33 @@ export function MainWindow({ username,
                           </div>
                         </div>
                       ) : highlightedText ? (
-                        currTranscriptText.split(highlightedText).map((part, i, arr) => (
-                          <React.Fragment key={i}>
-                            {part}
-                            {i < arr.length - 1 && (
-                              <mark className="bg-yellow-200 px-0 rounded
-                                               transition-colors duration-500"
-                              >
-                                {highlightedText}
-                              </mark>
-                            )}
-                          </React.Fragment>
-                        ))
+                        <div className="text-sm text-muted-foreground prose prose-sm max-w-none
+                                        [&_.code-block]:bg-[#1e1e2e] [&_.code-block]:rounded-lg
+                                        [&_.code-block]:border [&_.code-block]:border-slate-700
+                                        [&_code]:bg-slate-800 [&_code]:text-slate-200
+                                        [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5
+                                        [&_code]:text-sm">
+                          {currTranscriptText.split(highlightedText).map((part, i, arr) => (
+                            <React.Fragment key={i}>
+                              <MarkdownBlock content={part} />
+                              {i < arr.length - 1 && (
+                                <mark className="bg-yellow-200 px-0 rounded
+                                                 transition-colors duration-500">
+                                  {highlightedText}
+                                </mark>
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </div>
                       ) : (
-                        <pre className="text-sm text-muted-foreground font-sans
-                                        whitespace-pre-wrap break-words"
-                        >
-                          {currTranscriptText}
-                        </pre>
+                        <div className="text-sm text-muted-foreground prose prose-sm max-w-none
+                                        [&_.code-block]:bg-[#1e1e2e] [&_.code-block]:rounded-lg
+                                        [&_.code-block]:border [&_.code-block]:border-slate-700
+                                        [&_code]:bg-slate-800 [&_code]:text-slate-200
+                                        [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5
+                                        [&_code]:text-sm">
+                          <MarkdownBlock content={currTranscriptText} />
+                        </div>
                       )}
                     </div>
                   </ScrollArea>
@@ -616,32 +693,49 @@ export function MainWindow({ username,
         <Card className="lg:col-span-3 p-8 h-[calc(100vh-100px)] flex flex-col
                          min-h-0 min-w-0 overflow-hidden">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">
-              {activeAgent?
-               `Meeting ${activeAgent.name}` :
-                (activeProblem && activeProblem?.personas.length > 1) ?
-                 "Collaborative Analysis" : "Teacher Dialogue"
-              }
-            </h2>
+            {/* Left side: Prev button + title */}
+            <div className="flex items-center gap-2">
+              {!activeAgent && activeProblem && canGoBack && (
+                <button onClick  ={handlePreviousSequence}
+                        className="px-4 py-1.5 rounded-md bg-blue-500 hover:bg-blue-600
+                                   text-white text-sm font-medium transition-colors
+                                   flex items-center gap-1.5"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                       strokeLinejoin="round">
+                    <path d="M19 12H5" />
+                    <path d="m12 19-7-7 7-7" />
+                  </svg>
+                  Prev
+                </button>
+              )}
+              <h2 className="text-xl font-semibold">
+                {activeAgent?
+                 `Meeting ${activeAgent.name}` :
+                  (activeProblem && activeProblem?.personas.length > 1) ?
+                   "Collaborative Analysis" : "Teacher Dialogue"
+                }
+              </h2>
+            </div>
+
+            {/* Right side: Focus + Remaining + Next */}
             {!activeAgent && activeProblem &&
               <div className="flex items-center gap-4">
-                {/* Display current persona info (non-interactive) */}
                 <div className="flex items-center gap-2">
-                  <div className="text-sm  text-gray-500">Current Focus:</div>
+                  <div className="text-sm text-gray-500">Current Focus:</div>
                   {activeProblem.personas &&
-                    <div className="px-3 py-1.5 rounded-md bg-muted text-sm 
+                    <div className="px-3 py-1.5 rounded-md bg-muted text-sm
                                     font-semibold text-cardinal-red">
-                      {activeProblem.personas.length > 1 ? 
-                        "Multi-Perspective Analysis" : 
+                      {activeProblem.personas.length > 1 ?
+                        "Multi-Perspective Analysis" :
                         activeProblem.personas[0].personaId
                       }
                     </div>
                   }
                 </div>
-                
-                {/* Progress indicators and next button */}
+
                 <div className="flex items-center gap-2">
-                  {/* Show number of interactions if not completed the minimum required number */}
                   <div className="text-sm text-gray-500">
                     Remaining Interactions:{' '}
                     <span className={minInteractions - interactionCount > 0 ?
@@ -649,23 +743,37 @@ export function MainWindow({ username,
                       {Math.max(minInteractions - interactionCount, 0)}
                     </span>
                   </div>
-                  {currTranscriptIndex === learningSequences.length - 1 && canProgress ? (
-                    <Button onClick={handleProgressSequence}
-                            variant="default"
-                            className="ml-2"
-                    >
-                      Complete Session
-                    </Button>
-                  ) : (
-                    canProgress && currTranscriptIndex < learningSequences.length - 1 && (
-                      <Button onClick={handleProgressSequence}
-                              variant="outline"
-                              className="ml-2"
+                  {canProgress && (() => {
+                    const maxTIdx = (activeProblem?.transcripts?.length ?? 0) - 1;
+                    const problemIds = [...new Set(
+                      learningSequences.map(ls => ls.transcript.problem.problemId)
+                    )];
+                    const isLastStep = currTranscriptIndex >= maxTIdx
+                      && problemIds.indexOf(activeProblemId ?? '') >= problemIds.length - 1;
+
+                    return isLastStep ? (
+                      <button onClick  ={handleProgressSequence}
+                              className="ml-2 px-4 py-1.5 rounded-md bg-blue-500 hover:bg-blue-600
+                                         text-white text-sm font-medium transition-colors"
                       >
-                        Next Sequence →
-                      </Button>
-                    )
-                  )}
+                        Submit
+                      </button>
+                    ) : (
+                      <button onClick  ={handleProgressSequence}
+                              className="ml-2 px-4 py-1.5 rounded-md bg-blue-500 hover:bg-blue-600
+                                         text-white text-sm font-medium transition-colors
+                                         flex items-center gap-1.5"
+                      >
+                        Next
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                             strokeLinejoin="round">
+                          <path d="M5 12h14" />
+                          <path d="m12 5 7 7-7 7" />
+                        </svg>
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             }
@@ -714,32 +822,17 @@ export function MainWindow({ username,
           </div>
         </Card>
         
-        <Dialog open        ={showCompletionModal}
-                onOpenChange={setShowCompletionModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Congratulations! 🎉</DialogTitle>
-              <DialogDescription>
-                You&apos;ve completed all the teaching sequences. Thank you for participating!
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col gap-4 py-4">
-              <a href     ="https://forms.gle/aDkmiJKYDJ2PFh5GA" 
-                 target   ="_blank" 
-                 rel      ="noopener noreferrer"
-                 className={cn(buttonVariants({ variant: "default" }), "w-full")}
-              >
-                Take the Survey
-              </a>
-              <Button variant  ="outline"
-                      onClick  ={handleRestart}
-                      className="w-full"
-              >
-                Start New Session
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CompletionModal isOpen    ={showCompletionModal}
+                         onClose   ={() => {
+                             setShowCompletionModal(false);
+                             setCanProgressOverride(null); // Re-enable Submit button
+                         }}
+                         onConfirm ={() => {
+                             setShowCompletionModal(false);
+                             onAllCompleted(); // Mark chat complete
+                         }}
+                         surveyURL ="http://survey.com"
+        />
       </div>
     );
 };
