@@ -6,24 +6,45 @@ import "@/styles/react-tabs.css";
 // Custom imports
 import EscapeHandler from "@/app/hooks/useEscape";
 import { updateSettings, getPersonas, updatePersonaFields } from "@/util/DBUtil";
-import { DBPersona, DBSettingsSwitch, Settings } from "@/types";
+import { DBPersona, DBSettings, DBSettingsSwitch, Settings } from "@/types";
 
 type SettingsModalProps = {
-    isOpen          : boolean;
-    onClose         : () => void;
-    settings        : Settings;
-    setSettings     : React.Dispatch<React.SetStateAction<Settings | null>>;
-    selectedCategory: string | null;
+    isOpen               : boolean;
+    onClose              : () => void;
+    settings             : Settings;
+    setSettings          : React.Dispatch<React.SetStateAction<Settings | null>>;
+    categories           : string[];
+    selectedCategory     : string | null;
+    switchToCategory     : (category: string | null) => Promise<void>;
 };
+
+// Sentinel value used in the Category dropdown to represent the "All" mode:
+// the admin wants the sidebar to expose a runtime category filter instead of
+// locking the UI to a single category.
+const ALL_CATEGORIES_VALUE = "__all__";
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
                                                        onClose,
                                                        settings,
                                                        setSettings,
-                                                       selectedCategory }) => {
+                                                       categories,
+                                                       selectedCategory,
+                                                       switchToCategory }) => {
     // ---------------------------   S T A T E   ---------------------------- //
     const [textValue, setTextValue] = useState(settings.global_instructions ?? "");
-    
+
+    // Category dropdown is buffered locally — applied on "Apply" click so the
+    // parent can await chat creation before we close the modal. This value
+    // mirrors what will be written to settings.categoryName:
+    //   null  -> "All" mode (admin grants runtime sidebar filter)
+    //   "cs"  -> locked to the "cs" category
+    const [localCategory, setLocalCategory] = useState<string | null>(
+        settings.categoryName
+    );
+
+    // Admin password field — UI only, not yet wired to any backend logic.
+    const [adminPassword, setAdminPassword] = useState<string>("");
+
     // Persona state
     const [personas,              setPersonas]              = useState<DBPersona[]>([]);
     const [personaInstructions,   setPersonaInstructions]   = useState<Record<string, string>>({});
@@ -32,9 +53,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
     const [personaSkills,         setPersonaSkills]         = useState<Record<string, string>>({});
     const [isLoadingPersonas,     setIsLoadingPersonas]     = useState(false);
     const [activeTabIndex,        setActiveTabIndex]        = useState(0);
-    
+
     // Ref to prevent state updates after the effect is cleaned up
     const cancelledRef = useRef(false);
+
+    // Snapshots of each field at modal-open time. On Apply we diff the
+    // current values against these snapshots and only include fields that
+    // actually changed — matches how persona fields are handled.
+    const initialInstructionsRef = useRef<string>(settings.global_instructions ?? "");
+    const initialCategoryRef     = useRef<string | null>(settings.categoryName);
+    const initialSwitchesJSONRef = useRef<string>("");
     
     // ESC key handler
     EscapeHandler(() => {
@@ -56,8 +84,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
             }
 
             // Filter by selected category (show all if no category selected)
-            const filtered = selectedCategory
-                ? dbPersonas.filter(p => p.category === selectedCategory)
+            const filtered = localCategory
+                ? dbPersonas.filter(p => p.category === localCategory)
                 : dbPersonas;
             setPersonas(filtered);
             
@@ -87,33 +115,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
         }
     }
     
-    // Fetch personas when modal opens
-    useEffect(() => {
-        if (!isOpen) {
-            return;
-        }
-        
-        cancelledRef.current = false;
-        setIsLoadingPersonas(true);
-        setActiveTabIndex(0);
-        
-        loadPersonas();
-        
-        return () => { cancelledRef.current = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, selectedCategory]);
-    
-    if (!isOpen) {
-        return null;
-    }
-    
-    const handleApply = async () => {
-        // 1) Save global settings (existing logic)
-        const switchesForDB: DBSettingsSwitch[] = settings.switches.map(curr_switch => ({
+    /**
+     * Maps the in-memory Settings.switches (with transient `selection`) into
+     * the persistence shape used by the DB — {@link DBSettingsSwitch}.
+     */
+    function switchesToDB(): DBSettingsSwitch[] {
+        return settings.switches.map(curr_switch => ({
             id                  : curr_switch.id,
             isEnabled           : curr_switch.isEnabled,
             isMutualExclusive   : curr_switch.isMutualExclusive,
-            selectedOptionIndex : Array.isArray(curr_switch.selection)? null: curr_switch.selection,
+            selectedOptionIndex : Array.isArray(curr_switch.selection) ?
+                                  null : curr_switch.selection,
             option1_label       : curr_switch.option1_label,
             option1             : curr_switch.option1,
             option2_label       : curr_switch.option2_label,
@@ -125,16 +137,97 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
             option5_label       : curr_switch.option5_label,
             option5             : curr_switch.option5,
         }));
-        
-        await updateSettings({
-            global_instructions: textValue,
-            switches: switchesForDB
-        });
-        
-        setSettings((prev) => ({
-            ...prev!,
-            global_instructions: textValue,
-        }));
+    }
+
+    // Fetch personas when modal opens — also reset the local category buffer
+    // to match whatever's currently applied in the parent, and snapshot the
+    // other fields so Apply can diff against them.
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+
+        cancelledRef.current = false;
+        setIsLoadingPersonas(true);
+        setActiveTabIndex(0);
+        setLocalCategory(settings.categoryName);
+        setTextValue(settings.global_instructions ?? "");
+
+        initialInstructionsRef.current = settings.global_instructions ?? "";
+        initialCategoryRef.current     = settings.categoryName;
+        initialSwitchesJSONRef.current = JSON.stringify(switchesToDB());
+
+        loadPersonas();
+
+        return () => { cancelledRef.current = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
+
+    // Reload personas when the user switches category in the dropdown while
+    // the modal is open, but don't reset activeTabIndex.
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+        cancelledRef.current = false;
+        setIsLoadingPersonas(true);
+        loadPersonas();
+        return () => { cancelledRef.current = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [localCategory]);
+    
+    if (!isOpen) {
+        return null;
+    }
+    
+    const handleApply = async () => {
+        // 1) Build a minimal settings payload — only include fields the user
+        // actually changed since the modal opened.
+        const settingsPayload: Partial<DBSettings> = {};
+
+        if (textValue !== initialInstructionsRef.current) {
+            settingsPayload.global_instructions = textValue;
+        }
+
+        if (localCategory !== initialCategoryRef.current) {
+            settingsPayload.categoryName = localCategory;
+        }
+
+        const switchesForDB = switchesToDB();
+        if (JSON.stringify(switchesForDB) !== initialSwitchesJSONRef.current) {
+            settingsPayload.switches = switchesForDB;
+        }
+
+        // Only include the admin password if the admin typed a new one.
+        // The server will bcrypt-hash it before persisting.
+        const newAdminPassword = adminPassword.trim();
+        if (newAdminPassword.length > 0) {
+            settingsPayload.registerAsAdminPassword = newAdminPassword;
+        }
+
+        // Only hit the DB if there's at least one changed field.
+        if (Object.keys(settingsPayload).length > 0) {
+            const updatedSettings = await updateSettings(settingsPayload);
+            setSettings((prev) => {
+                if (!prev) return prev;
+                const next = { ...prev };
+                if ("global_instructions" in settingsPayload) {
+                    next.global_instructions = textValue;
+                }
+                if ("categoryName" in settingsPayload) {
+                    next.categoryName = localCategory;
+                }
+                if ("registerAsAdminPassword" in settingsPayload) {
+                    next.registerAsAdminPassword =
+                        updatedSettings.registerAsAdminPassword;
+                }
+                return next;
+            });
+            // Clear the plaintext input after a successful save.
+            if ("registerAsAdminPassword" in settingsPayload) {
+                setAdminPassword("");
+            }
+        }
         
         // 2) Save persona fields (only changed ones)
         const updates: { personaId: string;
@@ -180,6 +273,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
             // Reload to pick up updated persona data across all views
             window.location.reload();
             return;
+        }
+
+        // If the admin picked a specific category, switch the admin's own
+        // view to a chat in that category so they see the effect immediately.
+        // Picking "All" (localCategory === null) leaves the current chat alone.
+        if (localCategory && localCategory !== selectedCategory) {
+            await switchToCategory(localCategory);
         }
 
         onClose();
@@ -238,15 +338,52 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen,
               {/* General Tab Panel */}
               <TabPanel>
                 <div className="max-h-[60vh] overflow-y-auto">
+                  {/* Admin Password */}
+                  <div className="flex items-center gap-4 text-white mt-2 mb-4">
+                    <label className="text-xl font-medium whitespace-nowrap">
+                      Admin Password:
+                    </label>
+                    <input type     ="text"
+                           maxLength={15}
+                           value    ={adminPassword}
+                           onChange ={(e) => setAdminPassword(e.target.value)}
+                           className="w-40 px-3 py-1 text-black bg-white rounded border
+                                      border-gray-300 focus:outline-none focus:ring-2
+                                      focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Category */}
+                  <div className="flex items-center gap-4 text-white mt-2 mb-6">
+                    <label className="text-xl font-medium whitespace-nowrap">
+                      Category:
+                    </label>
+                    <select value    ={localCategory ?? ALL_CATEGORIES_VALUE}
+                            onChange ={(e) => {
+                                const value = e.target.value;
+                                setLocalCategory(value === ALL_CATEGORIES_VALUE ?
+                                                 null : value);
+                            }}
+                            className="w-40 px-3 py-1 text-black bg-white rounded border
+                                       border-gray-300 focus:outline-none focus:ring-2
+                                       focus:ring-blue-500"
+                    >
+                      <option value={ALL_CATEGORIES_VALUE}>All</option>
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   {/* Agent Instructions */}
                   <div className="text-white mt-2">
                     <label className="block text-xl font-medium mb-2">
-                      Agent Instructions
+                      Agent Instructions:
                     </label>
                     <textarea className="w-full px-3 py-2 text-black bg-white rounded border
                                          border-gray-300 focus:outline-none focus:ring-2
                                          focus:ring-blue-500"
-                              rows     ={5}
+                              rows     ={4}
                               value    ={textValue}
                               onChange ={(e) => setTextValue(e.target.value)}
                     />

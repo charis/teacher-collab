@@ -1077,7 +1077,9 @@ if n == 7:
     // --------------------------- //
     await prisma.settings.create({
         data: {
-            global_instructions: "Always end with a relevant question that reflects the user's input and aligns with the current topic.",
+            global_instructions    : "Always end with a relevant question that reflects the user's input and aligns with the current topic.",
+            categoryName           : null,
+            registerAsAdminPassword: null,
             switches: {
                 create: [
                     {

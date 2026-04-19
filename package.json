@@ -13,6 +13,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "postinstall": "prisma generate",
+    "studio": "node prisma/scripts/studio.js",
     "fix-postgres-sequence": "npx ts-node --project tsconfig.scripts.json prisma/scripts/fix-postgres-sequence.ts",
     "export-db": "ts-node prisma/scripts/export-to-csv.ts",
     "import-db": "npx ts-node --project tsconfig.scripts.json prisma/scripts/import-all.ts",

@@ -13,11 +13,13 @@ import { SpeechUtil } from "@/util/SpeechUtil";
 import { DBUser, Settings } from "@/types";
 
 type TopbarProps = {
-    user                : DBUser | null;
-    toggleSidebar       : () => void;
-    settings            : Settings | null;
-    setSettings         : React.Dispatch<React.SetStateAction<Settings | null>>;
-    selectedCategory    : string | null;
+    user                 : DBUser | null;
+    toggleSidebar        : () => void;
+    settings             : Settings | null;
+    setSettings          : React.Dispatch<React.SetStateAction<Settings | null>>;
+    categories           : string[];
+    selectedCategory     : string | null;
+    switchToCategory     : (category: string | null) => Promise<void>;
 };
 
 /**
@@ -31,7 +33,9 @@ const Topbar:React.FC<TopbarProps> = ({ user,
                                         toggleSidebar,
                                         settings,
                                         setSettings,
-                                        selectedCategory }) => {
+                                        categories,
+                                        selectedCategory,
+                                        switchToCategory }) => {
     // ---------------------------   S T A T E   ---------------------------- //
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [dbModalOpen,  setDbModalOpen]  = useState(false);
@@ -193,11 +197,13 @@ const Topbar:React.FC<TopbarProps> = ({ user,
         
         {settings && user?.isAdmin && (
           <>
-            <SettingsModal isOpen           ={settingsOpen}
-                           onClose          ={() => setSettingsOpen(false)}
-                           settings         ={settings!}
-                           setSettings      ={setSettings}
-                           selectedCategory ={selectedCategory}
+            <SettingsModal isOpen            ={settingsOpen}
+                           onClose           ={() => setSettingsOpen(false)}
+                           settings          ={settings!}
+                           setSettings       ={setSettings}
+                           categories        ={categories}
+                           selectedCategory  ={selectedCategory}
+                           switchToCategory  ={switchToCategory}
             />
             <DatabaseModal isOpen ={dbModalOpen}
                            onClose={() => setDbModalOpen(false)}

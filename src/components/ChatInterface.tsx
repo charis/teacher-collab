@@ -34,7 +34,7 @@ interface ChatInterfaceProps {
     setActiveTranscriptId  : React.Dispatch<React.SetStateAction<number | null>>;
     categories             : string[];
     selectedCategory       : string | null;
-    setSelectedCategory    : React.Dispatch<React.SetStateAction<string | null>>;
+    switchToCategory       : (category: string | null) => Promise<void>;
     onNextProblem          : () => void;
     onPrevProblem          : () => void;
     onAllCompleted         : () => void;
@@ -53,7 +53,7 @@ export function ChatInterface({ username,
                                 setActiveTranscriptId,
                                 categories,
                                 selectedCategory,
-                                setSelectedCategory,
+                                switchToCategory,
                                 onNextProblem,
                                 onPrevProblem,
                                 onAllCompleted }: ChatInterfaceProps) {
@@ -642,7 +642,7 @@ export function ChatInterface({ username,
                  settings              = {settings}
                  categories            = {categories}
                  selectedCategory      = {selectedCategory}
-                 setSelectedCategory   = {setSelectedCategory}
+                 switchToCategory      = {switchToCategory}
         />
         
         <div className="flex flex-col flex-grow">

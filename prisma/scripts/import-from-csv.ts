@@ -137,8 +137,10 @@ async function main() {
             }
             else if (modelName === 'Settings') {
                 const settingsSchema = z.object({
-                    id                 : z.coerce.number(),
-                    global_instructions: z.string().nullable().optional(),
+                    id                     : z.coerce.number(),
+                    global_instructions    : z.string().nullable().optional(),
+                    categoryName           : z.string().nullable().optional(),
+                    registerAsAdminPassword: z.string().nullable().optional(),
                 });
             
                 const data = settingsSchema.parse(row);

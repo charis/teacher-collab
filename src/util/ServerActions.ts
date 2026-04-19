@@ -52,13 +52,26 @@ export async function getSessionUser(): Promise<DBUser | null> {
 export async function createUserInDB(userInfo: FormData,
                                      isAdmin : boolean) :
        Promise<FormattedZodError | string | null> {
-    const { email, name, password } = Object.fromEntries(userInfo)
+    const { email, name, password, adminPassword } = Object.fromEntries(userInfo)
     const zodResult = CreateUserSchema.safeParse({email, name, password})
     if (!zodResult.success) {
         // `z.treeifyError()` replaces the deprecated `error.format()`/
         return z.treeifyError(zodResult.error)
     }
-    
+
+    // Admin registration requires a password that matches the hash stored
+    // in Settings.registerAsAdminPassword.
+    if (isAdmin) {
+        const typed = typeof adminPassword === "string" ? adminPassword : "";
+        if (!typed) {
+            return "Admin password is required to register as admin."
+        }
+        const ok = await dbUtils.verifyAdminPassword(typed);
+        if (!ok) {
+            return "Incorrect admin password."
+        }
+    }
+
     const [, error] = await dbUtils.createUser(email    as string,
                                                name     as string,
                                                password as string,

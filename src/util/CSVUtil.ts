@@ -385,8 +385,10 @@ async function importSingleRow(modelName: ModelName,
 
         case 'Settings': {
             const schema = z.object({
-                id                 : z.coerce.number(),
-                global_instructions: z.string().nullable().optional(),
+                id                     : z.coerce.number(),
+                global_instructions    : z.string().nullable().optional(),
+                categoryName           : z.string().nullable().optional(),
+                registerAsAdminPassword: z.string().nullable().optional(),
             });
             const data = schema.parse(row);
             const { id, ...settingsData } = data;
