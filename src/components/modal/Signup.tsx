@@ -26,11 +26,14 @@ const Signup:React.FC<SignupProps> = ({showModal}) => {
      */
     const [waiting, setWaiting] = useState<boolean>(false);
     
-    /** 
+    /**
      * {@code true} if the user has administrative privileges or
      * {@code false} otherwise
      */
     const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+    /** Plaintext admin password the user types when registering as admin. */
+    const [adminPassword, setAdminPassword] = useState<string>("");
     
     // Precompute messages to avoid duplicate helper calls in JSX
     /** Extracts any validation messages related to the email field */
@@ -61,10 +64,11 @@ const Signup:React.FC<SignupProps> = ({showModal}) => {
             return;
         }
         else if (error) {
-            // DB error
-            setDBResult(null);
+            // DB / admin-gate error — surface the reason to the user.
+            setDBResult(error);
+            setWaiting(false);
             return;
-        } 
+        }
         
         // No errors
         // Send the user a verificatiom email(i.e., with token to verify the account)
@@ -156,9 +160,33 @@ const Signup:React.FC<SignupProps> = ({showModal}) => {
         <CustomCheckBox // -----   S E L E C T   U S E R   T Y P E   ----- //
                 label="Register as Admin"
                 className="bg-dark-gray-6 hover:bg-dark-fill-2 rounded-lg ml-1 text-white"
-                onValueChange={setIsAdmin}
+                onValueChange={(checked) => {
+                    setIsAdmin(checked);
+                    if (!checked) {
+                        setAdminPassword("");
+                    }
+                }}
         />
-        
+
+        {isAdmin && (
+          <div // -----   A D M I N   P A S S W O R D   ----- //
+          >
+            <label htmlFor="adminPassword"
+                   className="text-sm font-medium block mb-2 text-gray-300">
+              Admin Password
+            </label>
+            <input type     ="password"
+                   name     ="adminPassword"
+                   value    ={adminPassword}
+                   onChange ={(e) => setAdminPassword(e.target.value)}
+                   className="border-2 outline-none sm:text-sm rounded-lg focus:ring-blue-500
+                              focus:border-blue-500 block w-full p-2.5 bg-white-600 border-gray-500
+                              placeholder-gray-400 text-black"
+                   placeholder="Enter the admin password"
+            />
+          </div>
+        )}
+
         <div className="text-sm font-medium text-gray-300">
           Already have an account?&nbsp;
           <a href="#" className="text-blue-700 hover:underline" onClick={() => showModal('login')}>

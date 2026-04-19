@@ -270,8 +270,10 @@ export const MODEL_META: Record<ModelName, ModelMeta> = {
         primaryKey    : 'id',
         sequenceColumn: 'id',
         fields: [
-            { name: 'id',                  type: 'number', readOnly: true },
-            { name: 'global_instructions', type: 'string', nullable: true },
+            { name: 'id',                      type: 'number', readOnly: true },
+            { name: 'global_instructions',     type: 'string', nullable: true },
+            { name: 'categoryName',            type: 'string', nullable: true },
+            { name: 'registerAsAdminPassword', type: 'string', nullable: true },
         ],
     },
     

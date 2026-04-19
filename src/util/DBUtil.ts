@@ -156,6 +156,24 @@ type SelectedFieldsFromTranscript = Prisma.TranscriptGetPayload<{
  * 
  * @throws when the database query fails
  */
+/**
+ * Validates a plaintext admin password against the bcrypt hash stored in
+ * Settings.registerAsAdminPassword. Returns false if the password is empty
+ * or no hash is configured (admin registration disabled).
+ */
+export async function verifyAdminPassword(plaintext: string): Promise<boolean> {
+    if (!plaintext) {
+        return false;
+    }
+    const settings = await prisma.settings.findFirst({
+        select: { registerAsAdminPassword: true },
+    });
+    if (!settings?.registerAsAdminPassword) {
+        return false;
+    }
+    return await bcrypt.compare(plaintext, settings.registerAsAdminPassword);
+}
+
 export async function getSettings(): Promise<DBSettings> {
     try {
         const settings = await prisma.settings.findFirst({
@@ -185,8 +203,10 @@ export async function getSettings(): Promise<DBSettings> {
         }));
         
         const dbSettings: DBSettings = {
-            switches           : dbSwitches,
-            global_instructions: settings.global_instructions
+            switches               : dbSwitches,
+            global_instructions    : settings.global_instructions,
+            categoryName           : settings.categoryName,
+            registerAsAdminPassword: settings.registerAsAdminPassword
         };
         
         return dbSettings;
@@ -516,21 +536,19 @@ export async function getChatTemplate(userEmail: string,
             return null // No user found with the given email
         }
 
-        // Find the earliest template (lowest id) that either has no chats OR
-        // whose chats all belong to other users.
+        // Find the earliest template (lowest id) for which the user does not
+        // already have an in-progress chat. A template whose prior user-chats
+        // are all completed is eligible for reuse so the user can start fresh.
         // Optionally filter by category if provided.
         const template = await prisma.chatTemplate.findFirst({
             where: {
                 ...(category ? { categoryName: category } : {}),
-                OR: [
-                    {
-                        chats: { none: {} } // no chats
+                chats: {
+                    none: {
+                        userId   : user.id,
+                        completed: false,
                     },
-                    {
-                        // all chats belong to users != current user
-                        chats: { every: { userId: { not: user.id } } }
-                    },
-                ],
+                },
             },
             orderBy: { id: 'asc' },
             include: {
@@ -1025,6 +1043,28 @@ export async function updateSettings(updatedFields: Partial<DBSettings>): Promis
                     data : { global_instructions: updatedFields.global_instructions ?? null },
                 });
             }
+
+            // Update categoryName if provided (null = "All" mode)
+            if ("categoryName" in updatedFields) {
+                await tx.settings.update({
+                    where: { id: existingSettings.id },
+                    data : { categoryName: updatedFields.categoryName ?? null },
+                });
+            }
+
+            // Update registerAsAdminPassword if provided. Callers pass the
+            // plaintext; we hash it here with bcrypt (never store plaintext).
+            // An empty/null value clears the password.
+            if ("registerAsAdminPassword" in updatedFields) {
+                const plaintext = updatedFields.registerAsAdminPassword;
+                const hashed = plaintext
+                    ? await bcrypt.hash(plaintext, 10)
+                    : null;
+                await tx.settings.update({
+                    where: { id: existingSettings.id },
+                    data : { registerAsAdminPassword: hashed },
+                });
+            }
             
             // Handle switches if provided
             if (Array.isArray(updatedFields.switches)) {
@@ -1134,7 +1174,9 @@ export async function updateSettings(updatedFields: Partial<DBSettings>): Promis
         }
         
         const dbSettings: DBSettings = {
-            global_instructions: updatedSettings.global_instructions,
+            global_instructions    : updatedSettings.global_instructions,
+            categoryName           : updatedSettings.categoryName,
+            registerAsAdminPassword: updatedSettings.registerAsAdminPassword,
             switches: updatedSettings.switches.map((currSwitch) => ({
                 id                 : currSwitch.id,
                 isEnabled          : currSwitch.isEnabled,

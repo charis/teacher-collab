@@ -17,7 +17,7 @@ interface SidebarProps {
     settings             : Settings | null;
     categories           : string[];
     selectedCategory     : string | null;
-    setSelectedCategory  : React.Dispatch<React.SetStateAction<string | null>>;
+    switchToCategory     : (category: string | null) => Promise<void>;
 }
 
 /**
@@ -47,7 +47,10 @@ export function Sidebar({activeChat,
                          settings,
                          categories,
                          selectedCategory,
-                         setSelectedCategory}: SidebarProps) {
+                         switchToCategory}: SidebarProps) {
+    // Sidebar category dropdown is shown only when the admin has picked
+    // the "All" mode in Settings (i.e. settings.categoryName is null).
+    const showSidebarFilter = settings != null && settings.categoryName == null;
     type ProblemSummary = {
         id          : string;
         title       : string;
@@ -141,21 +144,26 @@ export function Sidebar({activeChat,
     return (
       <div className="w-64 bg-gray-900 text-white p-4 flex flex-col h-full">
         <div className="flex-grow overflow-auto">
-          {/* CATEGORY FILTER */}
-          <h2 className="text-lg text-gray-400 mb-2 px-2">CATEGORY</h2>
-          <div className="mb-4 px-2">
-            <select value    ={selectedCategory ?? ''}
-                    onChange  ={(e) => setSelectedCategory(e.target.value || null)}
-                    className="w-full bg-gray-800 text-white border border-gray-700
-                               rounded px-2 py-1 text-sm focus:outline-none
-                               focus:border-gray-500"
-            >
-              <option value="">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
+          {/* CATEGORY FILTER — visible only when the admin enabled "All" in
+              Settings, giving users a runtime category switcher. */}
+          {showSidebarFilter && (
+            <>
+              <h2 className="text-lg text-gray-400 mb-2 px-2">CATEGORY</h2>
+              <div className="mb-4 px-2">
+                <select value    ={selectedCategory ?? ''}
+                        onChange ={(e) => switchToCategory(e.target.value || null)}
+                        className="w-full bg-gray-800 text-white border border-gray-700
+                                   rounded px-2 py-1 text-sm focus:outline-none
+                                   focus:border-gray-500"
+                >
+                  <option value="">All Categories</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
 
           {/* MEET THE AGENTS section */}
           <h2 className="text-lg text-gray-400 mb-2 px-2">

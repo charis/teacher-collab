@@ -83,6 +83,7 @@ model Category {
     personas                  Persona[]
     problems                  Problem[]
     chatTemplates             ChatTemplate[]
+    settings                  Settings[]
 }
 
 model Persona {
@@ -194,6 +195,9 @@ model Settings {
     id                        Int                      @id @default(autoincrement())
     switches                  SettingsSwitch[]
     global_instructions       String?
+    category                  Category?                @relation(fields: [categoryName], references: [name])
+    categoryName              String?
+    registerAsAdminPassword   String?
 }
 
 /// Represents a settings switch that supports either single-select

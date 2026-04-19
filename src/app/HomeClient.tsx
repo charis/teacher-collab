@@ -51,59 +51,69 @@ export default function HomeClient() {
         if (!hasMounted || status !== "authenticated")  {
             return;
         }
-        
+
         loadSettings();
         loadCategories();
         init();
-        
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [hasMounted, status]);
 
-    /**
-     * When the user switches category in the dropdown, find or create a chat
-     * for that category and switch to it.
-     */
+    // Enforce the admin-locked category from Settings. Runs once both the
+    // settings and the initial chat are loaded, and every time the admin
+    // changes settings.categoryName.
     useEffect(() => {
-        if (!selectedCategory || !authenticated || !session?.user?.email) {
+        if (!settings || !authenticated || activeChatId === NO_ACTIVE_CHAT_ID) {
+            return;
+        }
+        if (settings.categoryName && selectedCategory !== settings.categoryName) {
+            switchToCategory(settings.categoryName);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [settings?.categoryName, activeChatId]);
+
+    /**
+     * Switch to a chat for the given category: either reuse an existing
+     * non-completed chat or create a new one. Awaits chat creation so callers
+     * know the DB-side work is done before continuing (e.g. before closing
+     * the Settings modal).
+     */
+    async function switchToCategory(category: string | null): Promise<void> {
+        setSelectedCategory(category);
+
+        if (!category || !authenticated || !session?.user?.email) {
             return;
         }
 
-        // Check if the current active chat already belongs to this category
         const activeChat = chatRecord[activeChatId];
-        if (activeChat && getChatCategory(activeChat) === selectedCategory) {
-            return; // Already on the right chat
+        if (activeChat && getChatCategory(activeChat) === category) {
+            return;
         }
 
-        // Look for an existing non-completed chat in chatRecord for this category
         const existingChat = Object.values(chatRecord).find(
-            chat => !chat.completed && getChatCategory(chat) === selectedCategory
+            chat => !chat.completed && getChatCategory(chat) === category
         );
 
         if (existingChat) {
-            // Switch to the existing chat
             setActiveChatId(existingChat.id);
             const firstSeq = existingChat.learningSequences?.[0];
             if (firstSeq?.transcript) {
                 setActiveProblemId(firstSeq.transcript.problem?.problemId ?? null);
                 setActiveTranscriptId(firstSeq.transcript.id);
             }
+            return;
         }
-        else {
-            // Create a new chat for this category
-            const userEmail = session.user.email!;
-            newChat(userEmail, selectedCategory).then(chat => {
-                if (chat) {
-                    setActiveChatId(chat.id);
-                    const firstSeq = chat.learningSequences?.[0];
-                    if (firstSeq?.transcript) {
-                        setActiveProblemId(firstSeq.transcript.problem?.problemId ?? null);
-                        setActiveTranscriptId(firstSeq.transcript.id);
-                    }
-                }
-            });
+
+        const chat = await newChat(session.user.email!, category);
+        if (chat) {
+            setActiveChatId(chat.id);
+            const firstSeq = chat.learningSequences?.[0];
+            if (firstSeq?.transcript) {
+                setActiveProblemId(firstSeq.transcript.problem?.problemId ?? null);
+                setActiveTranscriptId(firstSeq.transcript.id);
+            }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedCategory]);
+    }
 
     // Initializes the chat interface by loading the chats, setting the active chat
     async function init() {
@@ -348,7 +358,9 @@ export default function HomeClient() {
                 toggleSidebar        = {toggleSidebar}
                 settings             = {settings}
                 setSettings          = {setSettings}
+                categories           = {categories}
                 selectedCategory     = {selectedCategory}
+                switchToCategory     = {switchToCategory}
         />
         {authenticated ? (
           <div className="flex flex-col flex-grow bg-gray-100">
@@ -365,7 +377,7 @@ export default function HomeClient() {
                            setActiveTranscriptId   = {setActiveTranscriptId}
                            categories              = {categories}
                            selectedCategory        = {selectedCategory}
-                           setSelectedCategory     = {setSelectedCategory}
+                           switchToCategory        = {switchToCategory}
                            onNextProblem           = {nextProblem}
                            onPrevProblem           = {prevProblem}
                            onAllCompleted          = {endSession}

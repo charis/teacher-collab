@@ -201,8 +201,10 @@ export type DBSettingsSwitch = {
  * Settings as stored in the database.
  */
 export type DBSettings = {
-    switches           : DBSettingsSwitch[];
-    global_instructions: string | null;
+    switches               : DBSettingsSwitch[];
+    global_instructions    : string | null;
+    categoryName           : string | null;
+    registerAsAdminPassword: string | null;
 }
 
 /**
@@ -229,9 +231,11 @@ export type SettingsSwitchState = DBSettingsSwitch & {
  * the client and is derived from DBSettings by adding transient UI fields.
  */
 export type Settings = {
-    speech             : boolean;
-    switches           : SettingsSwitchState[];
-    global_instructions: string | null;
+    speech                 : boolean;
+    switches               : SettingsSwitchState[];
+    global_instructions    : string | null;
+    categoryName           : string | null;
+    registerAsAdminPassword: string | null;
 };
 
 /**

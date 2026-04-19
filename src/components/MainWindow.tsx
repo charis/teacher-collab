@@ -831,7 +831,7 @@ export function MainWindow({ username,
                              setShowCompletionModal(false);
                              onAllCompleted(); // Mark chat complete
                          }}
-                         surveyURL ="http://survey.com"
+                         surveyURL ="https://forms.gle/FmpxxLDrT2EYYugC6"
         />
       </div>
     );
