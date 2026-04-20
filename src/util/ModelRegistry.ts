@@ -167,7 +167,6 @@ export const MODEL_META: Record<ModelName, ModelMeta> = {
             { name: 'id',               type: 'number',  readOnly: true },
             { name: 'problemId',        type: 'string'                  },
             { name: 'title',            type: 'string'                  },
-            { name: 'categoryName',     type: 'string'                  },
             { name: 'text',             type: 'string',  nullable: true },
             { name: 'imageURL',         type: 'string',  nullable: true },
             { name: 'imageDescription', type: 'string',  nullable: true },
@@ -204,6 +203,7 @@ export const MODEL_META: Record<ModelName, ModelMeta> = {
             { name: 'creationTime', type: 'date',    readOnly: true },
             { name: 'updateTime',   type: 'date',    readOnly: true },
             { name: 'templateId',   type: 'number',  nullable: true },
+            { name: 'categoryName', type: 'string',  nullable: true },
         ],
     },
     

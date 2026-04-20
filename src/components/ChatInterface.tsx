@@ -18,7 +18,7 @@ import { ChatMessage,
          DBPersona,
          Role,
          Settings } from "@/types";
-import { NO_ACTIVE_CHAT_ID } from "@/constants";
+import { NO_ACTIVE_CHAT_ID, NO_CHAT_ID_LEFT } from "@/constants";
 
 interface ChatInterfaceProps {
     username               : string | null;
@@ -37,7 +37,7 @@ interface ChatInterfaceProps {
     switchToCategory       : (category: string | null) => Promise<void>;
     onNextProblem          : () => void;
     onPrevProblem          : () => void;
-    onAllCompleted         : () => void;
+    onAllCompleted         : () => void | Promise<void>;
 }
         
 export function ChatInterface({ username,
@@ -647,10 +647,12 @@ export function ChatInterface({ username,
         
         <div className="flex flex-col flex-grow">
           <div className="flex-grow overflow-auto p-4 min-h-0">
-            {(activeChatId !== NO_ACTIVE_CHAT_ID) &&
+            {(activeChatId !== NO_ACTIVE_CHAT_ID &&
+              activeChatId !== NO_CHAT_ID_LEFT) &&
             <MainWindow username              = {username}
                         settings              = {settings}
                         activeChatId          = {activeChatId}
+                        activeCategory        = {chatRecord[activeChatId]?.categoryName ?? null}
                         learningSequences     = {learningSequences}
                         activeAgent           = {activeAgent}
                         activeProblemId       = {activeProblemId}
@@ -680,7 +682,7 @@ export function ChatInterface({ username,
                 />
               </div>
             }
-            {/* {activeChatId === NO_CHAT_ID_LEFT &&
+            {activeChatId === NO_CHAT_ID_LEFT &&
               <div className="flex flex-col items-center justify-center h-full">
                 <Image src    = "/images/completed.png"
                        alt    = "Completed learning sequences image"
@@ -688,9 +690,11 @@ export function ChatInterface({ username,
                        width  = {256}
                        priority // This tells Next.js to preload it
                 />
-                <h1 className="text-2xl font-bold">You completed all learning sequences.</h1>
+                <h1 className="text-2xl font-bold mt-4">
+                  You completed all learning sequences.
+                </h1>
               </div>
-            } */}
+            }
           </div>
         </div>
       </div>

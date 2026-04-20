@@ -81,8 +81,8 @@ model User {
 model Category {
     name                      String                   @id
     personas                  Persona[]
-    problems                  Problem[]
     chatTemplates             ChatTemplate[]
+    chats                     Chat[]
     settings                  Settings[]
 }
 
@@ -105,8 +105,6 @@ model Problem {
     id                        Int                      @id @default(autoincrement()) @map("_id")
     problemId                 String                   @unique
     title                     String
-    category                  Category                 @relation(fields: [categoryName], references: [name])
-    categoryName              String
     text                      String?
     imageURL                  String?
     imageDescription          String?
@@ -138,6 +136,8 @@ model Chat {
     messages                  Message[]
     template                  ChatTemplate?            @relation(fields: [templateId], references: [id], onDelete: SetNull)
     templateId                Int?
+    category                  Category?                @relation(fields: [categoryName], references: [name])
+    categoryName              String?
 }
 
 model LearningSequence {

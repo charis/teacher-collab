@@ -37,6 +37,7 @@ interface MainWindowProps {
     username             : string | null;
     settings             : Settings | null;
     activeChatId         : number;
+    activeCategory       : string | null;
     learningSequences    : DBLearningSequence[];
     activeAgent          : DBPersona | null;
     activeProblemId      : string | null;
@@ -57,12 +58,13 @@ interface MainWindowProps {
                             text               : string | null) => void;
     onNextProblem        : () => void;
     onPrevProblem        : () => void;
-    onAllCompleted       : () => void;
+    onAllCompleted       : () => void | Promise<void>;
 }
 
 export function MainWindow({ username,
                              settings,
                              activeChatId,
+                             activeCategory,
                              learningSequences,
                              activeAgent,
                              activeProblemId,
@@ -504,7 +506,7 @@ export function MainWindow({ username,
                   >
                     <span>Transcripts</span>
                   </Tab>
-                  {activeProblem?.category === "cs" && (
+                  {activeCategory === "cs" && (
                   <Tab className="inline-flex rounded-t-[10px] px-5 py-3 text-xs font-medium
                                   cursor-pointer bg-white text-cardinal-red border
                                   border-cardinal-red hover:bg-red-50 transition-all
@@ -642,7 +644,7 @@ export function MainWindow({ username,
                 </TabPanel>
 
                 {/* Whiteboard panel (CS only) */}
-                {activeProblem?.category === "cs" && (
+                {activeCategory === "cs" && (
                 <TabPanel className="flex flex-col min-h-0 flex-1">
                   <div className={isWhiteboardFullscreen
                     ? "fixed inset-0 z-50 bg-white"
@@ -827,9 +829,15 @@ export function MainWindow({ username,
                              setShowCompletionModal(false);
                              setCanProgressOverride(null); // Re-enable Submit button
                          }}
-                         onConfirm ={() => {
+                         onConfirm ={async () => {
                              setShowCompletionModal(false);
-                             onAllCompleted(); // Mark chat complete
+                             // Mark chat complete in the DB, then reload so
+                             // the app initializes to a fresh chat. The
+                             // just-completed chat is filtered out of
+                             // loadChats (completed: false), so it won't
+                             // reappear.
+                             await onAllCompleted();
+                             window.location.reload();
                          }}
                          surveyURL ="https://forms.gle/FmpxxLDrT2EYYugC6"
         />
