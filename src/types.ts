@@ -98,9 +98,8 @@ export type CachedDBPersona = DBPersona & {
  * Problem as stored in the database.
  */
 export type DBProblem = {
-    problemId  : string;
+    problemId       : string;
     title           : string;
-    category        : string;
     text            : string | null;
     imageURL        : string | null;
     imageDescription: string | null;
@@ -161,6 +160,7 @@ export type DBChat = {
     id               : number;
     templateId       : number | null;
     completed        : boolean;
+    categoryName     : string | null;
     creationTime     : Date;
     updateTime       : Date;
     learningSequences: DBLearningSequence[];

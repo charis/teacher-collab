@@ -458,6 +458,19 @@ export async function getUser(email          : string,
  * 
  * @throws an error when the database lookup or mapping fails
  */
+/**
+ * Returns {@code true} if the user has any chat in the DB (including
+ * completed ones). Used to distinguish a first-time user (for whom we
+ * auto-create an initial chat) from a returning user who has finished
+ * all prior chats (for whom we should render a "done" state instead).
+ */
+export async function userHasAnyChat(email: string): Promise<boolean> {
+    const count = await prisma.chat.count({
+        where: { user: { email } },
+    });
+    return count > 0;
+}
+
 export async function getChats(email          : string,
                                mostRecentFirst = false):
               Promise<DBChat[]> {
@@ -688,12 +701,14 @@ export async function createChat(email   : string,
                 throw new Error(`Unknown user email: ${email}`);
             }
             
-            // Create a new chat
+            // Create a new chat — inherit the template's category so we can
+            // identify chats by category without traversing learning sequences.
             const now = new Date();
             const createdChat = await txPrisma.chat.create({
                 data: {
                     userId      : user.id,
                     templateId  : template.id,
+                    categoryName: template.category ?? null,
                     creationTime: now,
                     updateTime  : now
                 }
@@ -898,10 +913,11 @@ export async function createChat(email   : string,
             id               : createdChat.id,
             templateId       : createdChat.templateId,
             completed        : createdChat.completed,
+            categoryName     : createdChat.categoryName,
             creationTime     : createdChat.creationTime,
             updateTime       : createdChat.updateTime,
             learningSequences: dbLearningSequences,
-            meetAgentChats   : meetAgentChats 
+            meetAgentChats   : meetAgentChats
         };
         
         return [dbChat, null];
@@ -1989,6 +2005,7 @@ async function mapChatsToDBChats<Order extends 'asc' | 'desc'>(chats: ChatWithLe
             id               : chat.id,
             templateId       : chat.templateId ?? null,
             completed        : chat.completed,
+            categoryName     : chat.categoryName ?? null,
             creationTime     : chat.creationTime,
             updateTime       : chat.updateTime,
             learningSequences: learningSequences,
@@ -2080,7 +2097,6 @@ function mapProblemToDB(problem: Prisma.ProblemGetPayload<{
     const parentProblem: Omit<DBProblem, "transcripts"> = {
         problemId       : problem.problemId,
         title           : problem.title,
-        category        : problem.categoryName,
         text            : problem.text ?? null,
         imageURL        : problem.imageURL ?? null,
         imageDescription: problem.imageDescription ?? null,
@@ -2091,7 +2107,6 @@ function mapProblemToDB(problem: Prisma.ProblemGetPayload<{
     return {
         problemId       : problem.problemId,
         title           : problem.title,
-        category        : problem.categoryName,
         text            : problem.text ?? null,
         imageURL        : problem.imageURL ?? null,
         imageDescription: problem.imageDescription ?? null,
@@ -2180,7 +2195,6 @@ function mapLearningSequenceToDB(learningSequence: LearningSequenceWithTranscrip
     const parentProblemWithoutTranscripts: Omit<DBProblem, "transcripts"> = {
         problemId       : learningSequence.transcript.problem.problemId,
         title           : learningSequence.transcript.problem.title,
-        category        : learningSequence.transcript.problem.categoryName,
         text            : learningSequence.transcript.problem.text ?? null,
         imageURL        : learningSequence.transcript.problem.imageURL ?? null,
         imageDescription: learningSequence.transcript.problem.imageDescription ?? null,

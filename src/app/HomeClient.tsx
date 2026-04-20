@@ -13,7 +13,8 @@ import { createChat,
          getChats,
          getProblemCategories,
          getSettings,
-         updateChat } from '@/util/DBUtil';
+         updateChat,
+         userHasAnyChat } from '@/util/DBUtil';
 import { DBChat, DBProblem, DBUser, Settings } from "@/types";
 import { NO_ACTIVE_CHAT_ID, NO_CHAT_ID_LEFT } from '@/constants';
 
@@ -52,9 +53,14 @@ export default function HomeClient() {
             return;
         }
 
-        loadSettings();
-        loadCategories();
-        init();
+        (async () => {
+            // Sequence matters: we need the admin-locked category from
+            // Settings before loading chats so that we only surface chats in
+            // that category (and auto-create in that category if first-time).
+            const loadedSettings = await loadSettings();
+            await loadCategories();
+            await init(loadedSettings?.categoryName ?? null);
+        })();
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [hasMounted, status]);
@@ -63,11 +69,34 @@ export default function HomeClient() {
     // settings and the initial chat are loaded, and every time the admin
     // changes settings.categoryName.
     useEffect(() => {
-        if (!settings || !authenticated || activeChatId === NO_ACTIVE_CHAT_ID) {
+        if (!settings || !authenticated ||
+            activeChatId === NO_ACTIVE_CHAT_ID ||
+            activeChatId === NO_CHAT_ID_LEFT) {
             return;
         }
-        if (settings.categoryName && selectedCategory !== settings.categoryName) {
-            switchToCategory(settings.categoryName);
+        if (!settings.categoryName || selectedCategory === settings.categoryName) {
+            return;
+        }
+
+        // Only switch to an existing non-completed chat in the locked
+        // category. Never auto-create one here — that path is reserved for
+        // explicit admin action via the Settings modal. If no existing chat
+        // matches, render the "All done" screen.
+        const existing = Object.values(chatRecord).find(
+            chat => !chat.completed &&
+                    chat.categoryName === settings.categoryName
+        );
+        if (existing) {
+            setActiveChatId(existing.id);
+            const firstSeq = existing.learningSequences?.[0];
+            if (firstSeq?.transcript) {
+                setActiveProblemId(firstSeq.transcript.problem?.problemId ?? null);
+                setActiveTranscriptId(firstSeq.transcript.id);
+            }
+            setSelectedCategory(settings.categoryName);
+        }
+        else {
+            setActiveChatId(NO_CHAT_ID_LEFT);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [settings?.categoryName, activeChatId]);
@@ -86,12 +115,12 @@ export default function HomeClient() {
         }
 
         const activeChat = chatRecord[activeChatId];
-        if (activeChat && getChatCategory(activeChat) === category) {
+        if (activeChat && activeChat.categoryName === category) {
             return;
         }
 
         const existingChat = Object.values(chatRecord).find(
-            chat => !chat.completed && getChatCategory(chat) === category
+            chat => !chat.completed && chat.categoryName === category
         );
 
         if (existingChat) {
@@ -116,29 +145,35 @@ export default function HomeClient() {
     }
 
     // Initializes the chat interface by loading the chats, setting the active chat
-    async function init() {
+    async function init(lockedCategory: string | null) {
         if (!authenticated || session.user === undefined) {
             return null;
         }
         const userEmail = session.user.email!;
-        
-        let activeChat: DBChat | null = await loadChats(userEmail);
-        
-        // If none found, create one and use the returned DBChat
+
+        let activeChat: DBChat | null = await loadChats(userEmail, lockedCategory);
+
         if (!activeChat) {
-            // Create a new chat if no chats are found
-            activeChat = await newChat(userEmail);
+            const hasHistory = await userHasAnyChat(userEmail);
+            if (!hasHistory) {
+                // First-time user — create their first chat in the locked
+                // category (or let getChatTemplate pick if no lock).
+                activeChat = await newChat(userEmail,
+                                           lockedCategory ?? undefined);
+            }
+            else {
+                setActiveChatId(NO_CHAT_ID_LEFT);
+            }
         }
-        
+
         // If we now have an activeChat, ensure app state is set and also set
         // initial problem/transcript
         if (activeChat) {
             setActiveChatId(activeChat.id);
 
             // Set initial category from the active chat
-            const chatCat = getChatCategory(activeChat);
-            if (chatCat) {
-                setSelectedCategory(chatCat);
+            if (activeChat.categoryName) {
+                setSelectedCategory(activeChat.categoryName);
             }
 
             // If learning sequences exist, set the problem and transcript from
@@ -156,24 +191,24 @@ export default function HomeClient() {
           }
     };
     
-    async function loadSettings(): Promise<void> {
+    async function loadSettings(): Promise<Settings | null> {
         try {
             const dbSettings = await getSettings();
-            if (dbSettings !== null) {
-                const settings: Settings = {
-                    ...dbSettings,
-                    speech  : false,
-                    switches: dbSettings.switches.map((currSwitch) => ({
-                        ...currSwitch,
-                        selection: currSwitch.isMutualExclusive ?
-                                   (currSwitch.selectedOptionIndex ?? 1) : []
-                    }))
-                }
-                setSettings(settings);
-            }
-            else {
+            if (!dbSettings) {
                 setSettings(null);
+                return null;
             }
+            const loaded: Settings = {
+                ...dbSettings,
+                speech  : false,
+                switches: dbSettings.switches.map((currSwitch) => ({
+                    ...currSwitch,
+                    selection: currSwitch.isMutualExclusive ?
+                               (currSwitch.selectedOptionIndex ?? 1) : []
+                }))
+            };
+            setSettings(loaded);
+            return loaded;
         }
         catch (error) {
             if (error instanceof Error) {
@@ -182,6 +217,7 @@ export default function HomeClient() {
             else {
                 console.log("Error retrieving settings");
             }
+            return null;
         }
     }
     
@@ -195,40 +231,38 @@ export default function HomeClient() {
         }
     }
 
-    /**
-     * Returns the category of a chat by looking at its first learning sequence's
-     * problem category. Returns null if no learning sequences exist.
-     */
-    function getChatCategory(chat: DBChat): string | null {
-        const firstSeq = chat.learningSequences?.[0];
-        return firstSeq?.transcript?.problem?.category ?? null;
-    }
-
-    // Loads the chats from the database and sets the active chat
-    async function loadChats(userEmail: string): Promise<DBChat | null> {
+    // Loads the non-completed chats from the database and sets the active
+    // chat. When the admin has locked Settings to a category, only chats in
+    // that category are considered — any other incomplete chats the user
+    // may have are ignored (they'll be surfaced again if the admin unlocks
+    // or switches the Settings category).
+    async function loadChats(userEmail     : string,
+                             lockedCategory: string | null): Promise<DBChat | null> {
         const dbChats = await getChats(userEmail, false);
-        const loadedChatRecord: Record<number, DBChat> = {};
         if (!dbChats) {
             return null;
         }
-        
-        if (dbChats.length == 0) {
-            console.log("dbChats.length is 0");
+
+        const eligible = lockedCategory
+            ? dbChats.filter(c => c.categoryName === lockedCategory)
+            : dbChats;
+
+        if (eligible.length === 0) {
             setActiveChatId(NO_CHAT_ID_LEFT);
             return null;
         }
-        
-        // The dbChats are sorted by update time; the most recently update is the last element
-        const activeChatId = dbChats[dbChats.length - 1].id;
-        
-        for (const dbChat of dbChats) {
+
+        const loadedChatRecord: Record<number, DBChat> = {};
+        for (const dbChat of eligible) {
             loadedChatRecord[dbChat.id] = dbChat;
         }
         setChatRecord(loadedChatRecord);
-        setActiveChatId(activeChatId);
-        console.log("Chats loaded");
-        
-        return dbChats[dbChats.length - 1]; // Return active chat (i.e.,  most recent chat)
+
+        // getChats is sorted asc by creationTime; the last element is the most
+        // recent — use it as the active chat.
+        const activeChat = eligible[eligible.length - 1];
+        setActiveChatId(activeChat.id);
+        return activeChat;
     };
     
     // Looks up the next chat template and creates a new chat from it

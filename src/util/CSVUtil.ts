@@ -441,7 +441,6 @@ async function importSingleRow(modelName: ModelName,
                 id              : z.coerce.number(),
                 problemId       : z.string(),
                 title           : z.string(),
-                categoryName    : z.string().optional().default('math'),
                 text            : z.string().nullable().optional(),
                 imageURL        : z.string().nullable().optional(),
                 imageDescription: z.string().nullable().optional(),
@@ -574,6 +573,7 @@ async function importSingleRow(modelName: ModelName,
                 creationTime: z.string().optional(),
                 updateTime  : z.string().optional(),
                 templateId  : z.coerce.number().nullable().optional(),
+                categoryName: z.string().nullable().optional(),
             });
             const data = schema.parse(row);
             const { id, creationTime, updateTime, ...rest } = data;

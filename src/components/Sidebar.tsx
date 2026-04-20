@@ -54,7 +54,6 @@ export function Sidebar({activeChat,
     type ProblemSummary = {
         id          : string;
         title       : string;
-        category    : string;
         transcriptId: number;
         isComplete  : boolean;
     };
@@ -73,7 +72,6 @@ export function Sidebar({activeChat,
                 return;
             }
             const title        = dbTranscript.problem.title;
-            const category     = dbTranscript.problem.category;
             const transcriptId = dbTranscript.id;
 
             const numOfPersonas = dbTranscript.problem.personas.length;
@@ -88,7 +86,6 @@ export function Sidebar({activeChat,
                 const problemSummary = {
                     id          : problemId,
                     title       : title,
-                    category    : category,
                     transcriptId: transcriptId,
                     isComplete  : isComplete
                 };
@@ -100,13 +97,8 @@ export function Sidebar({activeChat,
             }
         });
 
-        // Filter by selected category
-        let result = Array.from(lookup.values());
-        if (selectedCategory) {
-            result = result.filter(p => p.category === selectedCategory);
-        }
-        return result;
-    }, [activeChat, settings, selectedCategory]);
+        return Array.from(lookup.values());
+    }, [activeChat, settings]);
     
     // Compute unique agents (DBPersona) from visible (filtered) problems
     const agents: DBPersona[] = useMemo(() => {
