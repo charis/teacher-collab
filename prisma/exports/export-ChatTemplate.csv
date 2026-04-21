@@ -1,2 +1,3 @@
-id,name
-1,Math Concepts Template
+id,name,categoryName
+1,Math Concepts Template,math
+2,CS Concepts Template,cs

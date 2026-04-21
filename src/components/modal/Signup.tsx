@@ -52,7 +52,7 @@ const Signup:React.FC<SignupProps> = ({showModal}) => {
         // Wipe out any previous validation error
         setValidationError(null);
         setDBResult(null);
-        
+
         const error = await createUserInDB(data, isAdmin);
         if (error && typeof error !== "string") {
             // Validation error — sanitize the structure
@@ -70,25 +70,25 @@ const Signup:React.FC<SignupProps> = ({showModal}) => {
             return;
         }
         
-        // No errors
-        // Send the user a verificatiom email(i.e., with token to verify the account)
+        // The user row has been created in the DB — the rest is best-effort
+        // delivery of the verification email. If that fails we still treat
+        // registration as a success and navigate to Login; otherwise retrying
+        // would just hit a "user already exists" error on the same email.
         const { email } = Object.fromEntries(data)  as
                           { email?: string; name?: string; password?: string };
         try {
             await sendEmail(email as string, EmailType.ACCOUNT_VERIFICATION);
             showSuccess("User registered successfully. Please, check your email to verify"
                       + " your account.");
-            showModal('login');
         }
         catch (error) {
-            if (error instanceof Error) {
-                showError('Sending verification email failed: ' + error.message);
-            }
-            else{
-                showError('Sending verification email failed');
-            }
+            const reason = error instanceof Error ? error.message
+                                                  : 'unknown error';
+            showError("User registered, but the verification email could not " +
+                      "be sent (" + reason + "). You can request a new " +
+                      "verification email from the login screen.");
         }
-
+        showModal('login');
         setWaiting(false);
     }
     

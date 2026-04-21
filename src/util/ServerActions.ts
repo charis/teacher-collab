@@ -55,7 +55,6 @@ export async function createUserInDB(userInfo: FormData,
     const { email, name, password, adminPassword } = Object.fromEntries(userInfo)
     const zodResult = CreateUserSchema.safeParse({email, name, password})
     if (!zodResult.success) {
-        // `z.treeifyError()` replaces the deprecated `error.format()`/
         return z.treeifyError(zodResult.error)
     }
 

@@ -423,7 +423,8 @@ export default function HomeClient() {
                    alt    = "Banner image"
                    height = {600}
                    width  = {900}
-                   priority // This tells Next.js to preload it
+                   priority
+                   style  = {{ width: 'auto', height: 'auto' }}
             />
           </div>
         )}

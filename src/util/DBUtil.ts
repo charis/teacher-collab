@@ -657,12 +657,12 @@ export async function createUser(email   : string,
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
             return [null, `User '${email}' already exists`];
         }
-        
+
         if (error instanceof Error) {
             return [null, `Error creating user with email: ${email}: ${error.message}`];
         }
-         
-        return [null, "An unknown error occurred"]; 
+
+        return [null, "An unknown error occurred"];
     }
 }
 
