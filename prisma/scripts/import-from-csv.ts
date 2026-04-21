@@ -19,6 +19,21 @@ const prismaClient = new PrismaClient({
     accelerateUrl: process.env.DATABASE_URL,
 });
 
+// CSV values arrive as raw strings. `boolFromCSV` calls `Boolean(v)`,
+// which makes any non-empty string (including "false") truthy — that's why
+// every imported User ended up with `isAdmin = true`. Use this helper to
+// parse "true"/"false" strings correctly. Empty strings pass through as
+// `undefined` so `.optional().default(...)` can take over.
+const boolFromCSV = z.preprocess((v) => {
+    if (typeof v === 'string') {
+        const s = v.trim().toLowerCase();
+        if (s === '')      return undefined;
+        if (s === 'true')  return true;
+        if (s === 'false') return false;
+    }
+    return v;
+}, z.boolean());
+
 const VALID_MODELS = [
     'Category',
     'User',
@@ -85,8 +100,8 @@ async function main() {
                     email                    : z.string().email(),
                     name                     : z.string(),
                     password                 : z.string(),
-                    isAdmin                  : z.coerce.boolean(),
-                    isVerified               : z.coerce.boolean(),
+                    isAdmin                  : boolFromCSV,
+                    isVerified               : boolFromCSV,
                     forgotPasswordToken      : z.string().nullable().optional(),
                     forgotPasswordTokenExpiry: z.coerce.date().nullable().optional(),
                     verifyToken              : z.string().nullable().optional(),
@@ -156,8 +171,8 @@ async function main() {
                 const switchSchema = z.object({
                     id                : z.coerce.number(),
                     settingsId        : z.coerce.number(),
-                    isEnabled         : z.coerce.boolean().optional().default(true),
-                    isMutualExclusive : z.coerce.boolean().optional().default(false),
+                    isEnabled         : boolFromCSV.optional().default(true),
+                    isMutualExclusive : boolFromCSV.optional().default(false),
                     option1_label     : z.string().nullable().optional(),
                     option1           : z.string().nullable().optional(),
                     option2_label     : z.string().nullable().optional(),
@@ -344,7 +359,7 @@ async function main() {
                 const chatSchema = z.object({
                     id          : z.coerce.number(),
                     userId      : z.coerce.number(),
-                    completed   : z.coerce.boolean().optional().default(false),
+                    completed   : boolFromCSV.optional().default(false),
                     creationTime: z.string().optional(), // will parse to Date below
                     updateTime  : z.string().optional(), // will parse to Date below
                     templateId  : z.coerce.number(),

@@ -1,2 +1,2 @@
-id,global_instructions
-1,Always end with a relevant question that reflects the user's input and aligns with the current topic.
+id,global_instructions,categoryName,registerAsAdminPassword
+1,Always end with a relevant question that reflects the user's input and aligns with the current topic.,null,$2b$10$SxjhzkW0IB1QicvMdV7cYO9C2aFEeclWWBdzJ3PoXBHas1IkUaU/O
