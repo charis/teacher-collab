@@ -1,9 +1,21 @@
 id,email,name,password,isAdmin,isVerified,forgotPasswordToken,forgotPasswordTokenExpiry,verifyToken,verifyTokenExpiry
-1,test@user.com,BetaUser,$2b$10$LrsCjFMZkkaUdB1uWCBvP.NbKaLhAFeYOuJeXra0dDx5nyhV4u/Za,true,true,null,null,null,null
-2,shuman@stanford.edu,Shuman Wang,$2b$10$J1rkDUYUASs8BRO2jebXDuqxWQJWeIDaqaqu.kofdNne/IWvVU7va,true,true,null,null,null,null
 5,abc@gmail.com,Testing,$2b$10$Ye9t.y2/qxu7q3oQgFVUDunL5M1FgOPSNmpffBFCvZF5j5la4PM/C,true,true,null,null,AX9SR6~f4E-WP742dZ5N6XPrhVWcipIok27MWuw09el77rxJ4F4KdUeoxDNHW-GN,2025-09-26T18:07:06.987Z
 3,wlyeung@stanford.edu,Gordon,$2b$10$dceDVAaM/ieSgdLZsDFM6.mMCFugIhCga.FxoaZ2pOdhqjn5F2hlC,true,true,null,null,null,null
 4,jlangerosuna@gmail.com,jenny,$2b$10$xZ.01mYq0NRhUUFgukhQWeiKipKD/BS3ejSt.xmsBjmYDaKSO7zb2,true,true,null,null,null,null
 7,msuzara@stanford.edu,Miroslav,$2b$10$OuGBDcMj1EjqBYGMRJN8JO.THhdDfWdIBdb9tYJTRhf74gbMH/fb.,true,true,null,null,null,null
-11,neil@test.com,Neil,$2b$10$O3/ZW647Pk9SGR3NS5u.Vehpc8mqwH0JFEG2zfgW1qfBiZ8xcJZXq,false,true,null,null,null,null
-6,charis@stanford.edu,Charis,$2b$10$hAbj9.wb6s7.O3zxC5Tpue15CePruPyCx5mzhVHImKXcOMte.tNVi,false,true,null,null,odkDnqONwJsBP3hnh4GB453Kz3OR6wRGX7cvY~kgUZJ-x2uzTyVxzxqOM07uwYpz,2025-11-23T07:13:52.816Z
+11,neil@test.com,Neil,$2b$10$O3/ZW647Pk9SGR3NS5u.Vehpc8mqwH0JFEG2zfgW1qfBiZ8xcJZXq,true,true,null,null,null,null
+12,user1@stanford.edu,User 1,$2b$10$bFgPTvqE0AfAN3meV7RpSu8A9PuPjxgtSi6TZ/xt8sp1B0ntA2WFC,false,true,null,null,null,null
+2,shuman@stanford.edu,Shuman Wang,$2b$10$iSVze4Fo91IWl3cGaSAs2eU9zVt769APFJ9sgR5opmLrb.w95XnvW,true,true,null,null,null,null
+13,user2@stanford.edu,User 2,$2b$10$nH0cjaPNkmOi3EhZRLeMVOspv/KT2lZa8QIVdCnt0.OW/8PASB9wy,false,true,null,null,null,null
+21,user10@stanford.edu,User 10,$2b$10$w4dhzayQkLzoEhFqUqmfwODclpwYCO9QZQa3yhxoPL7qtblxpDWTG,false,true,null,null,null,null
+8,3094720079@qq.com,123,$2b$10$2A/ZCwwq3Mp6GcqICQoq0u59fcYK6JDQothItkYgFKBHTdRyZvV2G,false,true,null,null,null,null
+1,jcm@stanford.edu,John Mitchell,$2b$10$eUOW9l1c28huepMmccLZAuwcbUS/3jW7S8Cr9ikuVNcfXL7nfe/xe,true,true,null,null,null,null
+9,shumanlucy@qq.con,Shuman,$2b$10$COdpfyJx1/HbdQSMlz49L.e53iQ/d1ZX.w4Hvgn/gv3MFb1HcxB8a,false,false,null,null,1UOlWBHnDpNN~4vMO2xzaDjrXIQLyDoJYUAWRf-2b7DQU8dZBC3HZIzpmSngI4G_,2026-04-21T21:26:21.378Z
+14,user3@stanford.edu,User 3,$2b$10$kLT0dbeFek6Wd5D8LbaAxOq3GZ.G618NTpQpDJC2yQChs41ZGnPU2,false,true,null,null,null,null
+6,charis@stanford.edu,Charis,$2b$10$WsT4y748TmN712RP0joZzeLhMbiIzJbVoeOB0LBmoKn14Kp5dIupS,true,true,null,null,null,null
+15,user4@stanford.edu,User 4,$2b$10$Uv7k/SAk6jiZBHsXyyiZB.YZY/e8j/Y6pNO0/PBuOQ4vpp03LQa7y,false,true,null,null,null,null
+16,user5@stanford.edu,User 5,$2b$10$YAKkVsXTaN98fyhyqo3JyOpXitsQCl6RfGt2l7RHxfxqi1R7sjmm6,false,true,null,null,null,null
+17,user6@stanford.edu,User 6,$2b$10$UbisPpMHzwhMo3FMLNALvOxRxL6qpG3/UrhUg/v3h9DxFCrQ5wLM6,false,true,null,null,null,null
+18,user7@stanford.edu,User 7,$2b$10$36hJlfdu3SQj//tbb6Jbp.oTJWZ45IttQS7u3jfIVhNGjw.jD5Js.,false,true,null,null,null,null
+19,user8@stanford.edu,User 8,$2b$10$TpcsjjH5JcxIlEkz6bSm5uQ8F59Z5NFQueGEDA3Pf7eu21oQD4Az2,false,true,null,null,null,null
+20,user9@stanford.edu,User 9,$2b$10$amCA97in/rYZmXI5U3jXUOKmXSW/T19lsWedWquCbSvaMFpZr/A56,false,true,null,null,null,null

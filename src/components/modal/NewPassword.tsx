@@ -74,7 +74,7 @@ const NewPassword:React.FC<NewPasswordProps> = ({resetPasswordToken}) => {
                  name="newPassword"
                  className="border-2 outline-none sm:text-sm rounded-lg focus:ring-blue-500
                             focus:border-blue-500 block w-72 p-2.5 bg-white-600 border-gray-500
-                            placeholder-gray-400 text-black justify-center"
+                            placeholder-gray-400 text-white justify-center"
                  placeholder="Enter your new password here"
           />
           {newPasswordErrors.length > 0 &&
@@ -90,7 +90,7 @@ const NewPassword:React.FC<NewPasswordProps> = ({resetPasswordToken}) => {
                  name="passwordConfirm"
                  className="border-2 outline-none sm:text-sm rounded-lg focus:ring-blue-500
                             focus:border-blue-500 block w-72 p-2.5 bg-white-600 border-gray-500
-                            placeholder-gray-400 text-black"
+                            placeholder-gray-400 text-white"
                  placeholder="Enter again your new password here"
           />
           {passwordConfirmErrors.length > 0 &&

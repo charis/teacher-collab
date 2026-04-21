@@ -241,7 +241,7 @@ export async function sendMessageWithStreaming(
 
             const messagesIncludingSystemPrompt: ChatMessage[] = [
                 ...(systemMessage ? [systemMessage] : []),
-                ...annotateMessages(newMessages, numOfAgents),
+                ...annotateMessages(newMessages, numOfAgents, settings),
             ];
             
             // Send request
@@ -277,7 +277,7 @@ export async function sendMessageWithStreaming(
             const textDecoder = new TextDecoder();
             
             let responseText = '';
-            
+
             if (settings?.speech) {
                 // streamAndPlayAudio is expected to:
                 // - initialize the voice for persona,
@@ -317,7 +317,7 @@ export async function sendMessageWithStreaming(
                     // Do nothing
                 }
             }
-            
+
             // Save assistant message (i.e., response) in the database
             const chatMessage = {
                 id       : responseMessage.id,
@@ -601,15 +601,20 @@ function selectPersona(messages: ChatMessage[],
  * @returns a new array with modified messages based on the logic above.
  */
 function annotateMessages(messages   : ChatMessage[],
-                          numOfAgents: number): ChatMessage[] {
-    if (numOfAgents <= 1) {
+                          numOfAgents: number,
+                          settings   : Settings | null): ChatMessage[] {
+    // Skip annotation when there's only one agent (no ambiguity about who
+    // is speaking) OR in "Most Relevant Agent" mode — in that mode a single
+    // best-fit agent is chosen per turn and embedding "<Name>:" into history
+    // causes the LLM to echo the pattern (sometimes with the wrong name).
+    if (numOfAgents <= 1 || !isFixedAgentMode(settings)) {
         return messages;
     }
-    
+
     if (messages.length === 0) {
         return [];
     }
-    
+
     const updatedMessages = messages.map((msg) => {
         const annotatedMessage = { ...msg };
         if (annotatedMessage.role === Role.ASSISTANT) {
@@ -617,7 +622,7 @@ function annotateMessages(messages   : ChatMessage[],
         }
         return annotatedMessage;
     });
-    
+
     return updatedMessages;
 }
 

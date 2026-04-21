@@ -81,7 +81,7 @@ const Login:React.FC<LoginProps> = ({showModal}) => {
                  name="email"
                  className="border-2 outline-none sm:text-sm rounded-lg focus:ring-blue-500
                             focus:border-blue-500 block w-full p-2.5 bg-white-600 border-gray-500
-                            placeholder-gray-400 text-black"
+                            placeholder-gray-400 text-white"
                  placeholder="Enter your e-mail here"
           />
           {extractFieldError(validationError, 'email').length > 0 && (
@@ -97,7 +97,7 @@ const Login:React.FC<LoginProps> = ({showModal}) => {
                  name="password"
                  className="border-2 outline-none sm:text-sm rounded-lg focus:ring-blue-500
                             focus:border-blue-500 block w-full p-2.5 bg-white-600 border-gray-500
-                            placeholder-gray-400 text-black"
+                            placeholder-gray-400 text-white"
                  placeholder="Enter your password here"
           />
           {extractFieldError(validationError, 'password').length > 0 && (
