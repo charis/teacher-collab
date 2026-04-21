@@ -43,7 +43,7 @@ export const NON_EXISTING_CHAT_ID = "non-existing chat ID"
  * In one-on-one conversations, this specifies the number of interactions
  * required before the next agent joins the conversation.
  */
-export const MIN_INTERACTIONS = 3;
+export const MIN_INTERACTIONS = 1;
 
 // ------------------ L E A R N I N G   S E Q U E N C E S   ----------------- //
 /**
